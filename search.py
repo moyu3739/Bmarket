@@ -45,7 +45,7 @@ def pull(category: str, sort: str, show_item_info = False, keywords = [], shield
                 if show_item_info: print(item.info())
             count_item += len(fetched)
             if count_item % 100 == 0:
-                print(f"已获取 {count_item} 条记录...")
+                print(f"已获取 {count_item} 条记录")
 
             if not flag:
                 print("没有新商品了...")
@@ -106,7 +106,7 @@ def merge(category: str, sort: str, show_item_info = False, keywords = [], shiel
                 if show_item_info: print(item.info())
             count_item += len(fetched)
             if count_item % 100 == 0:
-                print(f"已获取 {count_item} 条记录...")
+                print(f"已获取 {count_item} 条记录")
 
             if not nextId:
                 if count == 0: print("Cookie 无效，请更新 Cookie...")
@@ -182,13 +182,14 @@ def merge(category: str, sort: str, show_item_info = False, keywords = [], shiel
     type=Choice(["pull", "merge"]),
     default="merge",
 )
-def cli(category: str, sort: str, operator: str):
+def main(category: str, sort: str, operator: str):
     match operator:
         case "pull":
             pull(category, sort)
         case "merge":
             merge(category, sort)
+    s = input("按任意键退出程序...")
 
 
-cli()
-input("按任意键退出程序...")
+main()
+

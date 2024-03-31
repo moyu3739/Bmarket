@@ -10,6 +10,7 @@ def get_cookie():
             return f.read()
     except:
         print("缺少 cookie.txt 文件")
+        input("按任意键退出程序...")
         exit(1)
 
 HEADERS = {

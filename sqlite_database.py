@@ -16,6 +16,7 @@ class DB:
             self.conn = connect("db/Bmarket.db")
         except Exception as e:
             print("缺少目录 db")
+            input("按任意键退出程序...")
             exit(1)
         self.connect_on = True
         self.main_table = main_table
