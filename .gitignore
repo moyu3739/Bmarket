@@ -1,6 +1,6 @@
+.git
 __pycache__
 build
 dist
+src/*.txt
 *.spec
-cookie.txt
-dbconfig.txt
