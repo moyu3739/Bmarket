@@ -1,6 +1,13 @@
 .git
+.vscode
 __pycache__
+db
 build
 dist
+test
+src/__pycache__
+src/db
+src/build
+src/dist
 src/*.txt
 *.spec
