@@ -1,3 +1,4 @@
+from sys import exit as sys_exit
 from requests import post
 from typing import List, Dict
 from item import Item
@@ -11,7 +12,7 @@ def get_cookie():
     except:
         print("缺少 cookie.txt 文件")
         input("按任意键退出程序...")
-        exit(1)
+        sys_exit(0)
 
 HEADERS = {
     "Cookie": get_cookie(),

@@ -36,9 +36,9 @@ def pull(category: str, sort: str, db_type: str, show_item_info = False, keyword
     cont = True # 是否继续运行
 
     match db_type:
-        case "sqlite": dbs = [sqlite_database.DB(category, "db/Bmarket.db")]
+        case "sqlite": dbs = [sqlite_database.DB(category, "Bmarket.db")]
         case "mysql": dbs = [mysql_database.DB(category, "./dbconfig.txt")]
-        case "both": dbs = [sqlite_database.DB(category, "db/Bmarket.db"), mysql_database.DB(category, "./dbconfig.txt")]
+        case "both": dbs = [sqlite_database.DB(category, "Bmarket.db"), mysql_database.DB(category, "./dbconfig.txt")]
 
     while True:
         try:
@@ -94,9 +94,9 @@ def merge(category: str, sort: str, db_type: str, show_item_info = False, keywor
     cont = True # 是否继续运行
 
     match db_type:
-        case "sqlite": dbs = [sqlite_database.DB(category, "db/Bmarket.db")]
+        case "sqlite": dbs = [sqlite_database.DB(category, "Bmarket.db")]
         case "mysql": dbs = [mysql_database.DB(category, "./dbconfig.txt")]
-        case "both": dbs = [sqlite_database.DB(category, "db/Bmarket.db"), mysql_database.DB(category, "./dbconfig.txt")]
+        case "both": dbs = [sqlite_database.DB(category, "Bmarket.db"), mysql_database.DB(category, "./dbconfig.txt")]
 
     while True:
         try:
@@ -188,7 +188,7 @@ def main(category: str, sort: str, operator: str, db_type: str):
             pull(category, sort, db_type)
         case "merge":
             merge(category, sort, db_type)
-    s = input("按任意键退出程序...")
+    input("按任意键退出程序...")
 
 
 main()

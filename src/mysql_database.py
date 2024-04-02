@@ -1,3 +1,5 @@
+from sys import exit as sys_exit
+from random import randint
 from pymysql import connect
 from time import strftime, localtime
 from item import Item
@@ -16,29 +18,34 @@ def read_config(file_path):
     except:
         print("缺少 mysql 数据库配置文件 dbconfig.txt")
         input("按任意键退出程序...")
-        exit(1)
+        sys_exit(0)
 
 class DB:
     connect_on: bool
     conn: connect
     main_table = "main"
-    tmp_table = "tmp"
+    tmp_table = f"tmp_{randint(0, 10000):03d}"
 
     def __init__(self, main_table = "main", config_file = "./dbconfig.txt"):
-        config = read_config(config_file)
-        self.conn  = connect(
-            host   = config["host"],    # 数据库主机名
-            port   = eval(config["port"]),    # 数据库端口号，默认为3306
-            user   = config["user"],    # 数据库用户名
-            passwd = config["passwd"],  # 数据库密码
-            db     = config["db"],      # 数据库名称
-            charset= config["charset"], # 字符编码
-        )
-        self.connect_on = True
-        self.main_table = main_table
-        self.create_table(self.main_table, False)
-        self.drop_table(self.tmp_table, False)
-        self.create_table(self.tmp_table, False)
+        try:
+            config = read_config(config_file)
+            self.conn  = connect(
+                host   = config["host"],    # 数据库主机名
+                port   = eval(config["port"]),    # 数据库端口号，默认为3306
+                user   = config["user"],    # 数据库用户名
+                passwd = config["passwd"],  # 数据库密码
+                db     = config["db"],      # 数据库名称
+                charset= config["charset"], # 字符编码
+            )
+            self.connect_on = True
+            self.main_table = main_table
+            self.create_table(self.main_table, False)
+            self.drop_table(self.tmp_table, False)
+            self.create_table(self.tmp_table, False)
+        except:
+            print("mysql 数据库连接失败")
+            input("按任意键退出程序...")
+            sys_exit(0)
 
     def disconnect(self):
         if not self.connect_on: return

@@ -1,3 +1,5 @@
+from os import path as os_path, mkdir
+from random import randint
 from sqlite3 import connect
 from time import strftime, localtime
 from item import Item
@@ -9,15 +11,11 @@ class DB:
     connect_on: bool
     conn: connect
     main_table = "main"
-    tmp_table = "tmp"
+    tmp_table = f"tmp_{randint(0, 10000):03d}"
 
-    def __init__(self, main_table = "main", db_file = "db/Bmarket.db"):
-        try:
-            self.conn = connect(db_file)
-        except:
-            print("缺少文件夹 db")
-            input("按任意键退出程序...")
-            exit(1)
+    def __init__(self, main_table = "main", db_file = "Bmarket.db"):
+        if not os_path.exists("db"): mkdir("db") # 创建目录 db
+        self.conn = connect("db/" + db_file)
         self.connect_on = True
         self.main_table = main_table
         self.create_table(self.main_table, False)
