@@ -23,30 +23,26 @@
 #### 如何获取自己的cookie
 用电脑的网页浏览器打开[B站市集](https://mall.bilibili.com/neul-next/index.html?page=magic-market_index)，我们要获取的就是这个网站的 cookie，你也可以上网自行查找如何获取一个网站的 cookie，网络上能查到的一些常见方法在这里有可能行不通，建议使用下面介绍的方法。
 
-如果你使用的是 edge 浏览器或谷歌浏览器，你可以完全跟着下面的步骤做，如果你使用的是其他的浏览器，操作也应该类似。下面图中，左边是 edge 浏览器，右边是谷歌浏览器
+如果你使用的是 edge 浏览器或谷歌浏览器，你可以完全跟着下面的步骤做，如果你使用的是其他的浏览器，操作也应该类似。
 1. 在网页中鼠标单击右键，单击“检查”（或者直接快捷键 F12），页面右侧会出现一个窗口
-<div align=center>
-<img src="img/edge_1.jpg" style="zoom: 50%;" />
-<img src="img/chrome_1.jpg" style="zoom: 65%;" />
-</div>
+    |edge 浏览器|谷歌浏览器|
+    |-|-|
+    |![](img/edge_1.jpg)|![](img/chrome_1.jpg)|
 
 2. 在右侧窗口上方的菜单栏中，找到“网络”（Network）选项
-<div align=center>
-<img src="img/edge_2.jpg" style="zoom: 55%;" />
-<img src="img/chrome_2.jpg" style="zoom: 50%;" />
-</div>
+    |edge 浏览器|谷歌浏览器|
+    |-|-|
+    |![](img/edge_2.jpg)|![](img/chrome_2.jpg)|
 
 3. 选中“网络”选项后，刷新网页，右侧会刷出很多记录，找到最上面第一条记录，单击打开
-<div align=center>
-<img src="img/edge_3.jpg" style="zoom: 55%;" />
-<img src="img/chrome_3.jpg" style="zoom: 50%;" />
-</div>
+    |edge 浏览器|谷歌浏览器|
+    |-|-|
+    |![](img/edge_3.jpg)|![](img/chrome_3.jpg)|
 
 4. 选中“标头”（Header），然后找到 "Cookie" 这一栏，复制里面的这一堆内容，粘贴到我们的 `cookie.txt` 中，注意复制的时候不要多复制或漏复制内容，粘贴完后记得保存
-<div align=center>
-<img src="img/edge_4.jpg" style="zoom: 37%;" />
-<img src="img/chrome_4.jpg" style="zoom: 38%;" />
-</div>
+    |edge 浏览器|谷歌浏览器|
+    |-|-|
+    |![](img/edge_4.jpg)|![](img/chrome_4.jpg)|
 
 
 ### 1.2 程序选项
