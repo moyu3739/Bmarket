@@ -51,22 +51,14 @@ def pull(category: str, sort: str, db_type: str, show_item_info = False, keyword
             count_item += len(fetched)
             if count_item % 100 == 0:
                 print(f"已获取 {count_item} 条记录")
-
             if not flag:
                 print("没有新商品了...")
                 break
-
             if not nextId:
                 if count == 0: print("Cookie 无效，请更新 Cookie...")
                 else: print("没有更多商品了...")
                 break
-        
             count += 1
-            # sleep(0.1)
-            # if count % 30 == 0:
-            #     print("避免风控，休息半分钟")
-            #     sleep(30)
-
         except Exception as e:
             if count_reconnect != count: # 如果上次重连后有获取到数据
                 print("可能触发风控，尝试自动重连...")
@@ -91,7 +83,6 @@ def pull(category: str, sort: str, db_type: str, show_item_info = False, keyword
                             break
             if not cont: break # 结束外层循环
             sleep(1) # 重连间隔，等待1秒后重连
-        
     for db in dbs: db.disconnect()
 
 def merge(category: str, sort: str, db_type: str, show_item_info = False, keywords = [], shieldwords = []):
@@ -116,7 +107,6 @@ def merge(category: str, sort: str, db_type: str, show_item_info = False, keywor
             count_item += len(fetched)
             if count_item % 100 == 0:
                 print(f"已获取 {count_item} 条记录")
-
             if not nextId:
                 if count == 0: print("Cookie 无效，请更新 Cookie...")
                 else:
@@ -125,13 +115,7 @@ def merge(category: str, sort: str, db_type: str, show_item_info = False, keywor
                         db.remove_invalid()
                         db.flush_new()
                 break
-
             count += 1
-            # sleep(0.1)
-            # if count % 30 == 0:
-            #     # print("避免风控，休息半分钟")
-            #     sleep(30)
-
         except Exception as e:
             if count_reconnect != count: # 如果上次重连后有获取到数据
                 print("可能触发风控，尝试自动重连...")
@@ -170,7 +154,6 @@ def merge(category: str, sort: str, db_type: str, show_item_info = False, keywor
                             break
             if not cont: break # 结束外层循环，退出程序
             sleep(1) # 重连间隔，等待1秒后重连
-
     for db in dbs: db.disconnect()
 
 
@@ -209,4 +192,3 @@ def main(category: str, sort: str, operator: str, db_type: str):
 
 
 main()
-

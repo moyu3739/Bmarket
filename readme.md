@@ -108,4 +108,4 @@
 7. 想要查看某个商品的详情，把其 "url" 列的内容复制到浏览器网址，即可查看
 
 ### 2.1 一些说明
-在文件夹 `DB Browser for SQLite` 中附带了一个 sqlite 数据库浏览器，`数据库.exe` 实际上就是其中 `DB Browser for SQLite.exe` 的快捷方式，它实际上是一个独立的软件包，所以`DB Browser for SQLite` 这整个文件夹可以自由地直接迁移
+在文件夹 `DB Browser for SQLite` 中附带了一个 sqlite 数据库浏览器，`数据库.exe` 实际上就是其中 `DB Browser for SQLite.exe` 的快捷方式，它实际上是一个独立的软件包，所以`DB Browser for SQLite` 这整个文件夹其实可以自由地直接迁移

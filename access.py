@@ -37,7 +37,6 @@ def get_market_data(
             "discountFilter": discount_filter,
         },
     )
-    # print(response.content)
     return response.json()
 
 def filter_data(data: dict, keywords = [], shieldwords = []): 
@@ -61,7 +60,6 @@ def fetch(nextId, category: str, sort: str, keywords = [], shieldwords = []):
         price_filter=[],
         sort_type=sort,
     )
-
     data = data.get("data", {})
     nextId = data.get("nextId", None)
     result = filter_data(data.get("data", []), keywords, shieldwords)
