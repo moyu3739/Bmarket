@@ -1,8 +1,8 @@
 from time import sleep
 from click import command, option, Choice
 from item import Item
-# from mysql_database import DB
-from sqlite_database import DB
+import mysql_database
+import sqlite_database
 from access import fetch
 
 CATEGORY_MAP = {
@@ -26,7 +26,7 @@ def category2id(category: str):
 def sort2type(sort: str):
     return SORT_MAP.get(sort, "TIME_DESC")
 
-def pull(category: str, sort: str, show_item_info = False, keywords = [], shieldwords = []):
+def pull(category: str, sort: str, db_type: str, show_item_info = False, keywords = [], shieldwords = []):
     nextId = None
     count = 0
     count_item = 0
@@ -35,12 +35,17 @@ def pull(category: str, sort: str, show_item_info = False, keywords = [], shield
     reconnect = 5 # 尝试重连的次数
     cont = True # 是否继续运行
 
-    db = DB(category)
+    match db_type:
+        case "sqlite": dbs = [sqlite_database.DB(category, "db/Bmarket.db")]
+        case "mysql": dbs = [mysql_database.DB(category, "./dbconfig.txt")]
+        case "both": dbs = [sqlite_database.DB(category, "db/Bmarket.db"), mysql_database.DB(category, "./dbconfig.txt")]
+
     while True:
         try:
             nextId, fetched = fetch(nextId, category2id(category), sort2type(sort), keywords, shieldwords)
             for item in fetched:
-                flag = db.store(item, False)
+                # flag = db.store(item, False)
+                for db in dbs: db.store(item, False)
                 if not flag: break
                 if show_item_info: print(item.info())
             count_item += len(fetched)
@@ -87,9 +92,9 @@ def pull(category: str, sort: str, show_item_info = False, keywords = [], shield
             if not cont: break # 结束外层循环
             sleep(1) # 重连间隔，等待1秒后重连
         
-    db.disconnect()
+    for db in dbs: db.disconnect()
 
-def merge(category: str, sort: str, show_item_info = False, keywords = [], shieldwords = []):
+def merge(category: str, sort: str, db_type: str, show_item_info = False, keywords = [], shieldwords = []):
     nextId = None
     count = 0
     count_item = 0
@@ -97,12 +102,16 @@ def merge(category: str, sort: str, show_item_info = False, keywords = [], shiel
     reconnect = 5 # 尝试重连的次数
     cont = True # 是否继续运行
 
-    db = DB(category)
+    match db_type:
+        case "sqlite": dbs = [sqlite_database.DB(category, "db/Bmarket.db")]
+        case "mysql": dbs = [mysql_database.DB(category, "./dbconfig.txt")]
+        case "both": dbs = [sqlite_database.DB(category, "db/Bmarket.db"), mysql_database.DB(category, "./dbconfig.txt")]
+
     while True:
         try:
             nextId, fetched = fetch(nextId, category2id(category), sort2type(sort), keywords, shieldwords)
             for item in fetched:
-                db.note(item)
+                for db in dbs: db.note(item)
                 if show_item_info: print(item.info())
             count_item += len(fetched)
             if count_item % 100 == 0:
@@ -112,8 +121,9 @@ def merge(category: str, sort: str, show_item_info = False, keywords = [], shiel
                 if count == 0: print("Cookie 无效，请更新 Cookie...")
                 else:
                     print("没有更多了...")
-                    db.remove_invalid()
-                    db.flush_new()
+                    for db in dbs:
+                        db.remove_invalid()
+                        db.flush_new()
                 break
 
             count += 1
@@ -148,19 +158,20 @@ def merge(category: str, sort: str, show_item_info = False, keywords = [], shiel
                             break
                         case "f":
                             print("保存已经获取到的记录...")
-                            db.flush_new()
+                            for db in dbs: db.flush_new()
                             cont = False
                             break
                         case "m":
                             print("合并已有记录和新记录...")
-                            db.remove_invalid()
-                            db.flush_new()
+                            for db in dbs:
+                                db.remove_invalid()
+                                db.flush_new()
                             cont = False
                             break
             if not cont: break # 结束外层循环，退出程序
             sleep(1) # 重连间隔，等待1秒后重连
 
-    db.disconnect()
+    for db in dbs: db.disconnect()
 
 
 @command()
@@ -182,12 +193,18 @@ def merge(category: str, sort: str, show_item_info = False, keywords = [], shiel
     type=Choice(["pull", "merge"]),
     default="merge",
 )
-def main(category: str, sort: str, operator: str):
+@option(
+    "--db_type",
+    prompt="请选择使用的数据库",
+    type=Choice(["sqlite", "mysql", "both"]),
+    default="sqlite",
+)
+def main(category: str, sort: str, operator: str, db_type: str):
     match operator:
         case "pull":
-            pull(category, sort)
+            pull(category, sort, db_type)
         case "merge":
-            merge(category, sort)
+            merge(category, sort, db_type)
     s = input("按任意键退出程序...")
 
 

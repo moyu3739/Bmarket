@@ -11,9 +11,9 @@ class DB:
     main_table = "main"
     tmp_table = "tmp"
 
-    def __init__(self, main_table = "main"):
+    def __init__(self, main_table = "main", db_file = "db/Bmarket.db"):
         try:
-            self.conn = connect("db/Bmarket.db")
+            self.conn = connect(db_file)
         except Exception as e:
             print("缺少目录 db")
             input("按任意键退出程序...")

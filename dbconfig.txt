@@ -1,0 +1,6 @@
+host: localhost
+port: 3306
+user: qwb
+passwd: 798798798
+db: Bmarket
+charset: utf8

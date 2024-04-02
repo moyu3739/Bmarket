@@ -5,20 +5,34 @@ from item import Item
 def GetTime():
     return strftime("%Y-%m-%d %H:%M:%S", localtime())
 
+def read_config(file_path):
+    try:
+        config_dict = {}
+        with open(file_path, 'r') as file:
+            for line in file:
+                key, value = line.strip().split(':')
+                config_dict[key.strip()] = value.strip().strip(",")
+        return config_dict
+    except:
+        print("缺少 mysql 数据库配置文件 dbconfig.txt")
+        input("按任意键退出程序...")
+        exit(1)
+
 class DB:
     connect_on: bool
     conn: connect
     main_table = "main"
     tmp_table = "tmp"
 
-    def __init__(self, main_table = "main"):
-        self.conn = connect(
-            host='localhost',    # 数据库主机名
-            port=3306,           # 数据库端口号，默认为3306
-            user='qwb',          # 数据库用户名
-            passwd='798798798',  # 数据库密码
-            db='Bmarket',        # 数据库名称
-            charset='utf8'       # 字符编码
+    def __init__(self, main_table = "main", config_file = "./dbconfig.txt"):
+        config = read_config(config_file)
+        self.conn  = connect(
+            host   = config["host"],    # 数据库主机名
+            port   = eval(config["port"]),    # 数据库端口号，默认为3306
+            user   = config["user"],    # 数据库用户名
+            passwd = config["passwd"],  # 数据库密码
+            db     = config["db"],      # 数据库名称
+            charset= config["charset"], # 字符编码
         )
         self.connect_on = True
         self.main_table = main_table
