@@ -3,7 +3,9 @@ from click import command, option, Choice
 from item import Item
 import mysql_database
 import sqlite_database
-from access import fetch
+from access import access
+from clashAPI import Selector, Mode, clashAPI
+from proxy import proxy
 
 CATEGORY_MAP = {
     "all": "",
@@ -26,14 +28,17 @@ def category2id(category: str):
 def sort2type(sort: str):
     return SORT_MAP.get(sort, "TIME_DESC")
 
-def pull(category: str, sort: str, db_type: str, show_item_info = False, keywords = [], shieldwords = []):
-    nextId = None
+def pull(category: str, sort: str, db_type: str, use_proxy = False, show_item_info = False, keywords = [], shieldwords = []):
+    next_id = None
     count = 0
     count_item = 0
     flag = True # 表示当前商品是否为本地数据库中没有的新商品
     count_reconnect = -1 # 上一次重连时的 count
     reconnect = 5 # 尝试重连的次数
     cont = True # 是否继续运行
+
+    bmarket = access()
+    if use_proxy: pxy = proxy(Selector.PAYPAL)
 
     match db_type:
         case "sqlite": dbs = [sqlite_database.DB(category, "Bmarket.db")]
@@ -42,7 +47,7 @@ def pull(category: str, sort: str, db_type: str, show_item_info = False, keyword
 
     while True:
         try:
-            nextId, fetched = fetch(nextId, category2id(category), sort2type(sort), keywords, shieldwords)
+            next_id, fetched = bmarket.fetch(next_id, category2id(category), sort2type(sort), keywords, shieldwords)
             for item in fetched:
                 # flag = db.store(item, False)
                 for db in dbs: db.store(item, False)
@@ -54,7 +59,7 @@ def pull(category: str, sort: str, db_type: str, show_item_info = False, keyword
             if not flag:
                 print("没有新商品了...")
                 break
-            if not nextId:
+            if not next_id:
                 if count == 0: print("Cookie 无效，请更新 Cookie...")
                 else: print("没有更多商品了...")
                 break
@@ -64,6 +69,7 @@ def pull(category: str, sort: str, db_type: str, show_item_info = False, keyword
                 print("可能触发风控，尝试自动重连...")
                 count_reconnect = count
                 reconnect_try = 0
+                if use_proxy: pxy.change_proxy() # 更换代理
             else: # 连续出现重连失败
                 reconnect_try += 1
             if reconnect_try >= reconnect:
@@ -85,13 +91,16 @@ def pull(category: str, sort: str, db_type: str, show_item_info = False, keyword
             sleep(1) # 重连间隔，等待1秒后重连
     for db in dbs: db.disconnect()
 
-def merge(category: str, sort: str, db_type: str, show_item_info = False, keywords = [], shieldwords = []):
-    nextId = None
+def merge(category: str, sort: str, db_type: str, use_proxy = False, show_item_info = False, keywords = [], shieldwords = []):
+    next_id = None
     count = 0
     count_item = 0
     count_reconnect = -1 # 上一次重连时的 count
     reconnect = 5 # 尝试重连的次数
     cont = True # 是否继续运行
+
+    bmarket = access()
+    if use_proxy: pxy = proxy(Selector.PAYPAL)
 
     match db_type:
         case "sqlite": dbs = [sqlite_database.DB(category, "Bmarket.db")]
@@ -100,14 +109,14 @@ def merge(category: str, sort: str, db_type: str, show_item_info = False, keywor
 
     while True:
         try:
-            nextId, fetched = fetch(nextId, category2id(category), sort2type(sort), keywords, shieldwords)
+            next_id, fetched = bmarket.fetch(next_id, category2id(category), sort2type(sort), keywords, shieldwords)
             for item in fetched:
                 for db in dbs: db.note(item)
                 if show_item_info: print(item.info())
             count_item += len(fetched)
             if count_item % 100 == 0:
                 print(f"已获取 {count_item} 条记录")
-            if not nextId:
+            if not next_id:
                 if count == 0: print("Cookie 无效，请更新 Cookie...")
                 else:
                     print("没有更多了...")
@@ -121,6 +130,7 @@ def merge(category: str, sort: str, db_type: str, show_item_info = False, keywor
                 print("可能触发风控，尝试自动重连...")
                 count_reconnect = count
                 reconnect_try = 0
+                if use_proxy: pxy.change_proxy() # 更换代理
             else: # 连续出现重连失败
                 reconnect_try += 1
             if reconnect_try >= reconnect:
@@ -182,13 +192,22 @@ def merge(category: str, sort: str, db_type: str, show_item_info = False, keywor
     type=Choice(["sqlite", "mysql", "both"]),
     default="sqlite",
 )
-def main(category: str, sort: str, operator: str, db_type: str):
+@option(
+    "--use_proxy",
+    prompt="重连失败时是否自动使用代理",
+    type=Choice(["y", "n"]),
+    default="n",
+)
+def main(category: str, sort: str, operator: str, db_type: str, use_proxy: str):
     match operator:
         case "pull":
-            pull(category, sort, db_type)
+            pull(category, sort, db_type, use_proxy == "y")
         case "merge":
-            merge(category, sort, db_type)
+            merge(category, sort, db_type, use_proxy == "y")
+
+try:
+    main()
+except Exception as e:
+    print(e)
+finally:
     input("按任意键退出程序...")
-
-
-main()

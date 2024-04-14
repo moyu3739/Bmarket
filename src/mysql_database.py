@@ -16,9 +16,7 @@ def read_config(file_path):
                 config_dict[key.strip()] = value.strip().strip(",")
         return config_dict
     except:
-        print("缺少 mysql 数据库配置文件 dbconfig.txt")
-        input("按任意键退出程序...")
-        sys_exit(0)
+        raise FileNotFoundError("缺少 mysql 数据库配置文件 dbconfig.txt")
 
 class DB:
     connect_on: bool
@@ -27,8 +25,8 @@ class DB:
     tmp_table = f"tmp_{randint(0, 10000):03d}"
 
     def __init__(self, main_table = "main", config_file = "./dbconfig.txt"):
+        config = read_config(config_file)
         try:
-            config = read_config(config_file)
             self.conn  = connect(
                 host   = config["host"],    # 数据库主机名
                 port   = eval(config["port"]),    # 数据库端口号，默认为3306
@@ -43,9 +41,7 @@ class DB:
             self.drop_table(self.tmp_table, False)
             self.create_table(self.tmp_table, False)
         except:
-            print("mysql 数据库连接失败")
-            input("按任意键退出程序...")
-            sys_exit(0)
+            raise ConnectionError("mysql 数据库连接失败")
 
     def disconnect(self):
         if not self.connect_on: return
