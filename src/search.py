@@ -1,10 +1,8 @@
 from time import sleep
 from click import command, option, Choice
-from item import Item
 import mysql_database
 import sqlite_database
 from access import access
-from clashAPI import Selector, Mode, clashAPI
 from proxy import proxy
 
 CATEGORY_MAP = {
@@ -22,6 +20,8 @@ SORT_MAP = {
     "价格降序": "PRICE_DESC",
 }
 
+dbs = []
+
 def category2id(category: str):
     return CATEGORY_MAP.get(category, "")
 
@@ -37,14 +37,18 @@ def pull(category: str, sort: str, db_type: str, use_proxy = False, show_item_in
     reconnect = 5 # 尝试重连的次数
     cont = True # 是否继续运行
 
-    bmarket = access()
-    if use_proxy: pxy = proxy(Selector.PAYPAL)
-
+    # 选择数据库类型
     match db_type:
         case "sqlite": dbs = [sqlite_database.DB(category, "Bmarket.db")]
-        case "mysql": dbs = [mysql_database.DB(category, "./dbconfig.txt")]
-        case "both": dbs = [sqlite_database.DB(category, "Bmarket.db"), mysql_database.DB(category, "./dbconfig.txt")]
+        case "mysql": dbs = [mysql_database.DB(category, "./config.txt")]
+        case "both": dbs = [sqlite_database.DB(category, "Bmarket.db"), mysql_database.DB(category, "./config.txt")]
 
+    # 初始化与市集的连接
+    bmarket = access()
+    # 初始化代理
+    if use_proxy: pxy = proxy("./config.txt")
+
+    print("开始获取数据...")
     while True:
         try:
             next_id, fetched = bmarket.fetch(next_id, category2id(category), sort2type(sort), keywords, shieldwords)
@@ -69,10 +73,14 @@ def pull(category: str, sort: str, db_type: str, use_proxy = False, show_item_in
                 print("可能触发风控，尝试自动重连...")
                 count_reconnect = count
                 reconnect_try = 0
-                if use_proxy: pxy.change_proxy() # 更换代理
+                # if use_proxy: pxy.change_proxy() # 更换代理
             else: # 连续出现重连失败
                 reconnect_try += 1
             if reconnect_try >= reconnect:
+                if use_proxy:
+                    print("自动重连失败，尝试切换代理...")
+                    pxy.change_proxy() # 更换代理
+                    continue
                 while True:
                     print("可能触发了风控，请选择接下来的操作...")
                     print("c  手动重置网络连接，然后继续获取数据")
@@ -99,14 +107,19 @@ def merge(category: str, sort: str, db_type: str, use_proxy = False, show_item_i
     reconnect = 5 # 尝试重连的次数
     cont = True # 是否继续运行
 
-    bmarket = access()
-    if use_proxy: pxy = proxy(Selector.PAYPAL)
-
+    # 选择数据库类型
+    global dbs
     match db_type:
         case "sqlite": dbs = [sqlite_database.DB(category, "Bmarket.db")]
-        case "mysql": dbs = [mysql_database.DB(category, "./dbconfig.txt")]
-        case "both": dbs = [sqlite_database.DB(category, "Bmarket.db"), mysql_database.DB(category, "./dbconfig.txt")]
+        case "mysql": dbs = [mysql_database.DB(category, "./config.txt")]
+        case "both": dbs = [sqlite_database.DB(category, "Bmarket.db"), mysql_database.DB(category, "./config.txt")]
 
+    # 初始化与市集的连接
+    bmarket = access()
+    # 初始化代理
+    if use_proxy: pxy = proxy("./config.txt")
+
+    print("开始获取数据...")
     while True:
         try:
             next_id, fetched = bmarket.fetch(next_id, category2id(category), sort2type(sort), keywords, shieldwords)
@@ -130,10 +143,14 @@ def merge(category: str, sort: str, db_type: str, use_proxy = False, show_item_i
                 print("可能触发风控，尝试自动重连...")
                 count_reconnect = count
                 reconnect_try = 0
-                if use_proxy: pxy.change_proxy() # 更换代理
+                # if use_proxy: pxy.change_proxy() # 更换代理
             else: # 连续出现重连失败
                 reconnect_try += 1
             if reconnect_try >= reconnect:
+                if use_proxy:
+                    print("自动重连失败，尝试切换代理...")
+                    pxy.change_proxy() # 更换代理
+                    continue
                 while True:
                     print("自动重连失败，请选择接下来的操作...")
                     print("c  手动重置网络连接，然后继续运行程序")
@@ -210,4 +227,14 @@ try:
 except Exception as e:
     print(e)
 finally:
+    for db in dbs: db.disconnect()
     input("按任意键退出程序...")
+
+# cf = ConfigParser()
+
+# cf.read("config.txt",encoding='utf-8')
+# port = cf.get('mysql config', 'port')
+# host = cf.get('mysql config', 'host')
+# secret = cf.get('proxy config', 'secret')
+
+# print(host + ":" + secret + ":" + port)

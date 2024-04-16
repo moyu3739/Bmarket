@@ -34,7 +34,8 @@ def access_msg(status_code, content) -> dict:
 
 class clashAPI:
     def __init__(self, external_controller = "127.0.0.1:9090", secret = ""):
-        self.exc = "http://" + external_controller
+        if not external_controller.startswith("http"):
+            self.exc = "http://" + external_controller
         self.secret = secret
         self.headers = {
             "content-type": "application/json",

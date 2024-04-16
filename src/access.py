@@ -1,9 +1,6 @@
-from sys import exit as sys_exit
 from requests import post
-from typing import List, Dict
+from typing import List
 from item import Item
-
-# MARKET_URL = "https://mall.bilibili.com/mall-magic-c/internet/c2c/v2/list"
 
 
 class access:
@@ -19,7 +16,7 @@ class access:
             with open("cookie.txt", "r") as f:
                 return f.read()
         except:
-            raise FileNotFoundError("缺少 cookie.txt 文件")
+            raise FileNotFoundError("[错误] 缺少 cookie.txt 文件")
 
     def get_market_data(
         self,
