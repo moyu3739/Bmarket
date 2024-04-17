@@ -79,10 +79,12 @@ def pull(category: str, sort: str, db_type: str, use_proxy = False, show_item_in
             if reconnect_try >= reconnect:
                 if use_proxy:
                     print("自动重连失败，尝试切换代理...")
-                    pxy.change_proxy() # 更换代理
-                    continue
+                    msg = pxy.change_proxy() # 更换代理
+                    if msg == "ok": continue
+                    else: print(msg)
                 while True:
-                    print("可能触发了风控，请选择接下来的操作...")
+                    if use_proxy: print("切换代理失败，请选择接下来的操作...")
+                    else: print("自动重连失败，请选择接下来的操作...")
                     print("c  手动重置网络连接，然后继续获取数据")
                     print("q  退出程序，不执行任何操作")
                     s = input()
@@ -149,10 +151,12 @@ def merge(category: str, sort: str, db_type: str, use_proxy = False, show_item_i
             if reconnect_try >= reconnect:
                 if use_proxy:
                     print("自动重连失败，尝试切换代理...")
-                    pxy.change_proxy() # 更换代理
-                    continue
+                    msg = pxy.change_proxy() # 更换代理
+                    if msg == "ok": continue
+                    else: print(msg)
                 while True:
-                    print("自动重连失败，请选择接下来的操作...")
+                    if use_proxy: print("切换代理失败，请选择接下来的操作...")
+                    else: print("自动重连失败，请选择接下来的操作...")
                     print("c  手动重置网络连接，然后继续运行程序")
                     print("q  退出程序，不执行任何操作（警告：此操作将不会保存本次获取到的新记录）")
                     print("f  保存新获取到的记录，然后退出程序（警告：此操作将会保留部分已失效记录）")

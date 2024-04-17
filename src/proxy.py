@@ -51,11 +51,12 @@ class proxy:
 
     def change_proxy(self):
         self.all_proxy.remove(self.clash.get_now_proxy(self.selector))
-        if self.all_proxy == []: raise Exception("[错误] 无可用代理")
+        if self.all_proxy == []: return "无可用代理"
         self.test_all_proxy("https://mall.bilibili.com")
         min_delay_proxy = min(self.delays, key=self.delays.get)
-        if self.delays[min_delay_proxy] == 9999: raise Exception("[错误] 所有代理延迟过高，无法使用代理")
+        if self.delays[min_delay_proxy] == 9999: return "所有代理延迟过高，无法使用代理"
         self.clash.set_proxy(min_delay_proxy, self.selector)
+        return "ok"
 
 
 
