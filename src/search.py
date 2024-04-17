@@ -70,7 +70,7 @@ def pull(category: str, sort: str, db_type: str, use_proxy = False, show_item_in
             count += 1
         except Exception as e:
             if count_reconnect != count: # 如果上次重连后有获取到数据
-                print("可能触发风控，尝试自动重连...")
+                print("连接断开，可能触发风控，尝试自动重连...")
                 count_reconnect = count
                 reconnect_try = 0
                 # if use_proxy: pxy.change_proxy() # 更换代理
@@ -80,12 +80,14 @@ def pull(category: str, sort: str, db_type: str, use_proxy = False, show_item_in
                 if use_proxy:
                     print("自动重连失败，尝试切换代理...")
                     msg = pxy.change_proxy() # 更换代理
-                    if msg == "ok": continue
+                    if msg == "ok":
+                        print(f"切换到代理 '{pxy.now_proxy}'")
+                        continue
                     else: print(msg)
                 while True:
                     if use_proxy: print("切换代理失败，请选择接下来的操作...")
                     else: print("自动重连失败，请选择接下来的操作...")
-                    print("c  手动重置网络连接，然后继续获取数据")
+                    print("c  再次尝试连接")
                     print("q  退出程序，不执行任何操作")
                     s = input()
                     match s:
@@ -142,7 +144,7 @@ def merge(category: str, sort: str, db_type: str, use_proxy = False, show_item_i
             count += 1
         except Exception as e:
             if count_reconnect != count: # 如果上次重连后有获取到数据
-                print("可能触发风控，尝试自动重连...")
+                print("连接断开，可能触发风控，尝试自动重连...")
                 count_reconnect = count
                 reconnect_try = 0
                 # if use_proxy: pxy.change_proxy() # 更换代理
@@ -152,12 +154,14 @@ def merge(category: str, sort: str, db_type: str, use_proxy = False, show_item_i
                 if use_proxy:
                     print("自动重连失败，尝试切换代理...")
                     msg = pxy.change_proxy() # 更换代理
-                    if msg == "ok": continue
+                    if msg == "ok":
+                        print(f"切换到代理 '{pxy.now_proxy}'")
+                        continue
                     else: print(msg)
                 while True:
                     if use_proxy: print("切换代理失败，请选择接下来的操作...")
                     else: print("自动重连失败，请选择接下来的操作...")
-                    print("c  手动重置网络连接，然后继续运行程序")
+                    print("c  再次尝试连接")
                     print("q  退出程序，不执行任何操作（警告：此操作将不会保存本次获取到的新记录）")
                     print("f  保存新获取到的记录，然后退出程序（警告：此操作将会保留部分已失效记录）")
                     print("m  合并原有记录和新记录，然后退出程序（警告：此操作将会丢失部分原有记录）")
@@ -233,12 +237,3 @@ except Exception as e:
 finally:
     for db in dbs: db.disconnect()
     input("按任意键退出程序...")
-
-# cf = ConfigParser()
-
-# cf.read("config.txt",encoding='utf-8')
-# port = cf.get('mysql config', 'port')
-# host = cf.get('mysql config', 'host')
-# secret = cf.get('proxy config', 'secret')
-
-# print(host + ":" + secret + ":" + port)

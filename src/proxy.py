@@ -22,13 +22,19 @@ def read_proxy_config(file_path):
 class proxy:
     def __init__(self, config_file = "./config.txt"):
         config = read_proxy_config(config_file)
-        try:
-            self.clash = clashAPI(f"{config["host"]}:{config["port"]}", config["secret"])
-        except:
-            raise ConnectionError(f"[错误] Clash 连接失败，请检查 Clash 是否已启动并在端口 '{config["host"]}:{config["port"]}' 监听")
+        self.host = config["host"]
+        self.port = config["port"]
+        self.secret = config["secret"]
         self.selector = config["selector"]
+
+        try:
+            self.clash = clashAPI(f"{self.host}:{self.port}", self.secret)
+        except:
+            raise ConnectionError(f"[错误] Clash 连接失败，请检查 Clash 是否已启动并在端口 '{self.host}:{self.port}' 监听")
+        
         try:
             self.all_proxy = self.clash.get_all_proxy(self.selector)
+            self.now_proxy = self.clash.get_now_proxy(self.selector)
         except:
             raise Exception(f"[错误] 获取代理列表失败，请检查配置文件 '{config_file}' 中的 selector 是否正确")
 
@@ -50,13 +56,18 @@ class proxy:
             }
 
     def change_proxy(self):
-        self.all_proxy.remove(self.clash.get_now_proxy(self.selector))
-        if self.all_proxy == []: return "无可用代理"
-        self.test_all_proxy("https://mall.bilibili.com")
-        min_delay_proxy = min(self.delays, key=self.delays.get)
-        if self.delays[min_delay_proxy] == 9999: return "所有代理延迟过高，无法使用代理"
-        self.clash.set_proxy(min_delay_proxy, self.selector)
-        return "ok"
+        try:
+            self.all_proxy.remove(self.clash.get_now_proxy(self.selector))
+            if self.all_proxy == []: return "无可用代理"
+            self.test_all_proxy("https://mall.bilibili.com")
+
+            min_delay_proxy = min(self.delays, key=self.delays.get)
+            if self.delays[min_delay_proxy] == 9999: return "所有可用代理延迟过高，无法使用代理"
+            self.clash.set_proxy(min_delay_proxy, self.selector)
+            self.now_proxy = min_delay_proxy
+            return "ok"
+        except:
+            return f"与 Clash 通信失败，请检查 Clash 是否正在端口 '{self.host}:{self.port}' 监听"
 
 
 
