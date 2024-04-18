@@ -3,7 +3,7 @@ from click import command, option, Choice
 import mysql_database
 import sqlite_database
 from access import access
-from proxy import proxy
+from clash_proxy import proxy
 
 CATEGORY_MAP = {
     "all": "",
@@ -48,7 +48,7 @@ def pull(category: str, sort: str, db_type: str, use_proxy = False, show_item_in
     # 初始化代理
     if use_proxy: pxy = proxy("./config.txt")
 
-    print("开始获取数据...")
+    print("开始获取商品信息...")
     while True:
         try:
             next_id, fetched = bmarket.fetch(next_id, category2id(category), sort2type(sort), keywords, shieldwords)
@@ -92,7 +92,7 @@ def pull(category: str, sort: str, db_type: str, use_proxy = False, show_item_in
                     s = input()
                     match s:
                         case "c":
-                            print("继续获取数据...")
+                            print("继续获取商品信息...")
                             cont = True
                             break
                         case "q":
@@ -123,7 +123,7 @@ def merge(category: str, sort: str, db_type: str, use_proxy = False, show_item_i
     # 初始化代理
     if use_proxy: pxy = proxy("./config.txt")
 
-    print("开始获取数据...")
+    print("开始获取商品信息...")
     while True:
         try:
             next_id, fetched = bmarket.fetch(next_id, category2id(category), sort2type(sort), keywords, shieldwords)
@@ -168,7 +168,7 @@ def merge(category: str, sort: str, db_type: str, use_proxy = False, show_item_i
                     s = input()
                     match s:
                         case "c":
-                            print("继续获取数据...")
+                            print("继续获取商品信息...")
                             cont = True
                             break
                         case "q":
@@ -195,31 +195,31 @@ def merge(category: str, sort: str, db_type: str, use_proxy = False, show_item_i
 @command()
 @option(
     "--category",
-    prompt="请选择分类",
+    prompt="商品类别",
     type=Choice(["all", "fig", "model", "peri", "3C", "gacha"]),
     default="fig",
 )
 @option(
     "--sort",
-    prompt="请选择排序方式",
+    prompt="排序方式",
     type=Choice(["时间降序", "价格升序", "价格降序"]),
     default="时间降序",
 )
 @option(
     "--operator",
-    prompt="请选择获取数据的方式",
+    prompt="处理新记录的方式",
     type=Choice(["pull", "merge"]),
     default="merge",
 )
 @option(
     "--db_type",
-    prompt="请选择使用的数据库",
+    prompt="使用的数据库",
     type=Choice(["sqlite", "mysql", "both"]),
     default="sqlite",
 )
 @option(
     "--use_proxy",
-    prompt="重连失败时是否自动使用代理",
+    prompt="重连失败时是否自动切换代理",
     type=Choice(["y", "n"]),
     default="n",
 )
