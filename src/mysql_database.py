@@ -111,7 +111,7 @@ class DB:
             # 新增操作
             sql = f"INSERT INTO `{table}` (`id`, `name`, `time`, `price`, `o_price`, `discount`, `url`) "\
                 f"VALUES ("\
-                f"'{item.id}', '{item.name}', '{GetTime()}', {item.price}, {item.market_price}, {item.discount}, '{item.process_url()}')"
+                f"'{item.id}', '{item.name.replace("'", "''")}', '{GetTime()}', {item.price}, {item.market_price}, {item.discount}, '{item.process_url()}')"
             cursor.execute(sql)
             # COMMIT命令用于把事务所做的修改保存到数据库
             self.conn.commit()
