@@ -12,7 +12,7 @@ def read_mysql_config(file_path):
     cfp = ConfigParser()
     flag = cfp.read(file_path,encoding='utf-8')
     if not flag:
-        raise FileNotFoundError(f"[错误] 缺少配置文件 '{file_path}'")
+        raise FileNotFoundError(f"缺少配置文件 '{file_path}'")
     
     try:
         config = {}
@@ -24,16 +24,18 @@ def read_mysql_config(file_path):
         config["charset"] = cfp.get('mysql config', 'charset')
         return config
     except:
-        raise Exception(f"[错误] 配置文件 {file_path} 格式错误，或未包含必要字段：host, port, user, passwd, db, charset")
+        # raise Exception(f"配置文件 {file_path} 格式错误，或未包含必要字段：host, port, user, passwd, db, charset")
+        raise Exception(f"配置文件 {file_path} 格式错误")
 
 class DB:
     connect_on: bool
     conn: connect
     main_table = "main"
-    tmp_table = f"tmp_{randint(0, 10000):03d}"
+    tmp_table = "tmp_main"
 
     def __init__(self, main_table = "main", config_file = "./config.txt"):
         config = read_mysql_config(config_file)
+        self.tmp_table = "tmp_" + main_table
         try:
             self.conn  = connect(
                 host   = config["host"],    # 数据库主机名
@@ -49,7 +51,7 @@ class DB:
             self.drop_table(self.tmp_table, False)
             self.create_table(self.tmp_table, False)
         except:
-            raise ConnectionError("[错误] mysql 数据库连接失败")
+            raise ConnectionError("MySQL 数据库连接失败")
 
     def disconnect(self):
         if not self.connect_on: return
@@ -111,7 +113,7 @@ class DB:
             # 新增操作
             sql = f"INSERT INTO `{table}` (`id`, `name`, `time`, `price`, `o_price`, `discount`, `url`) "\
                 f"VALUES ("\
-                f"'{item.id}', '{item.name.replace("'", "''")}', '{GetTime()}', {item.price}, {item.market_price}, {item.discount}, '{item.process_url()}')"
+                f"'{item.id}', '{item.name.replace("'", "''")}', '{GetTime()}', {item.price}, {item.origin_price}, {item.discount}, '{item.process_url()}')"
             cursor.execute(sql)
             # COMMIT命令用于把事务所做的修改保存到数据库
             self.conn.commit()

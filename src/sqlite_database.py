@@ -11,9 +11,10 @@ class DB:
     connect_on: bool
     conn: connect
     main_table = "main"
-    tmp_table = f"tmp_{randint(0, 10000):03d}"
+    tmp_table = "tmp_main"
 
     def __init__(self, main_table = "main", db_file = "Bmarket.db"):
+        self.tmp_table = "tmp_" + main_table
         if not os_path.exists("db"): mkdir("db") # 创建目录 db
         self.conn = connect("db/" + db_file)
         self.connect_on = True
@@ -82,7 +83,7 @@ class DB:
             # 新增操作
             sql = f"INSERT INTO `{table}` (`id`, `name`, `time`, `price`, `o_price`, `discount`, `url`) "\
                 f"VALUES ("\
-                f"'{item.id}', '{item.name.replace("'", "''")}', '{GetTime()}', {item.price}, {item.market_price}, {item.discount}, '{item.process_url()}')"
+                f"'{item.id}', '{item.name.replace("'", "''")}', '{GetTime()}', {item.price}, {item.origin_price}, {item.discount}, '{item.process_url()}')"
             cursor.execute(sql)
             # COMMIT命令用于把事务所做的修改保存到数据库
             self.conn.commit()

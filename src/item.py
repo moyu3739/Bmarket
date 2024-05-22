@@ -2,16 +2,16 @@ class Item:
     id = 0
     name = ''
     price = 0
-    market_price = 0
+    origin_price = 0
     discount = 0
     detail_list = []
 
-    def __init__(self, id_, name_, price_, market_price_, detail_list_):
+    def __init__(self, id_, name_, price_, origin_price_, detail_list_):
         self.id = id_
         self.name = name_
         self.price = price_
-        self.market_price = market_price_
-        self.discount = float(price_) / float(market_price_)
+        self.origin_price = origin_price_
+        self.discount = float(price_) / float(origin_price_)
         self.detail_list = detail_list_
     
     # keywords := [ [...], [...] ]
@@ -44,4 +44,4 @@ class Item:
         return f"https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId={self.id}&from=market_index"
 
     def info(self):
-        return f"{self.name} - {self.price}元（原价：{self.market_price}元，{'%.2f'%self.discount}折） - {self.process_url()}"
+        return f"{self.name} - {self.price}元（原价：{self.origin_price}元，{'%.2f'%self.discount}折） - {self.process_url()}"

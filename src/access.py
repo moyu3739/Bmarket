@@ -3,20 +3,20 @@ from typing import List
 from item import Item
 
 
+def get_cookie():
+    try:
+        with open("cookie.txt", "r") as f:
+            return f.read()
+    except:
+        raise FileNotFoundError("缺少 cookie.txt 文件")
+
 class access:
     def __init__(self):
         self.MARKET_URL = "https://mall.bilibili.com/mall-magic-c/internet/c2c/v2/list"
         self.HEADERS = {
-            "Cookie": self.get_cookie(),
+            "Cookie": get_cookie(),
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
         }
-
-    def get_cookie(self):
-        try:
-            with open("cookie.txt", "r") as f:
-                return f.read()
-        except:
-            raise FileNotFoundError("[错误] 缺少 cookie.txt 文件")
 
     def get_market_data(
         self,

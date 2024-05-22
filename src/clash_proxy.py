@@ -7,7 +7,7 @@ def read_proxy_config(file_path):
     cfp = ConfigParser()
     flag = cfp.read(file_path, encoding='utf-8')
     if not flag:
-        raise FileNotFoundError(f"[错误] 缺少配置文件 '{file_path}'")
+        raise FileNotFoundError(f"缺少配置文件 '{file_path}'")
 
     try:
         config = {}
@@ -17,7 +17,7 @@ def read_proxy_config(file_path):
         config["secret"] = cfp.get('clash config', 'secret')
         return config
     except:
-        raise Exception(f"[错误] 配置文件 {file_path} 格式错误，请检查是否有 [clash config] 段，以及其中是否包含必要字段：host, port, selector, secret")
+        raise Exception(f"配置文件 {file_path} 格式错误，请检查是否有 [clash config] 段，以及其中是否包含必要字段：host, port, selector, secret")
 
 class proxy:
     def __init__(self, config_file = "./config.txt"):
@@ -30,13 +30,13 @@ class proxy:
         try:
             self.clash = clashAPI(f"{self.host}:{self.port}", self.secret)
         except:
-            raise ConnectionError(f"[错误] Clash 连接失败，请检查 Clash 是否已启动并在端口 '{self.host}:{self.port}' 监听，以及 selector 是否正确")
+            raise ConnectionError(f"Clash 连接失败，请检查 Clash 是否已启动并在端口 '{self.host}:{self.port}' 监听，以及 selector 是否正确")
         
         try:
             self.all_proxy = self.clash.get_all_proxy(self.selector)
             self.now_proxy = self.clash.get_now_proxy(self.selector)
         except:
-            raise ConnectionError(f"[错误] 获取代理列表失败，请检查 Clash 是否正在端口 '{self.host}:{self.port}' 监听，以及 selector 是否正确")
+            raise ConnectionError(f"获取代理列表失败，请检查 Clash 是否正在端口 '{self.host}:{self.port}' 监听，以及 selector 是否正确")
 
     def test_all_proxy(self, target_url, timeout = 3000):
         with ThreadPoolExecutor() as executor:
