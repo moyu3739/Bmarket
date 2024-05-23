@@ -151,6 +151,7 @@ class App(QWidget):
         self.use_sqlite = False
         self.use_clash = False
         self.show_item = True
+        self.auto_scroll = True
         self.run_thread = None
         self.dbs = []
     
@@ -171,10 +172,14 @@ class App(QWidget):
         )
 
         # 表格区
-        self.table = Table(self, header=["商品", "市集价", "原价", "市集折扣", "链接"], content=example_content)
         self.checkbox_show_item = CheckBox(self, "实时显示商品", on_change=self.OnChangeShowItem)
         self.checkbox_show_item.setChecked(True)
-        self.layout_table = WrapLayout([self.table, self.checkbox_show_item])
+        self.checkbox_auto_scroll = CheckBox(self, "自动滚动到底部", on_change=self.OnChangeAutoScroll)
+        self.checkbox_auto_scroll.setChecked(True)
+        self.layout_table_options = WrapLayout([self.checkbox_show_item, self.checkbox_auto_scroll], "H")
+
+        self.table = Table(self, header=["商品", "市集价", "原价", "市集折扣", "链接"], content=example_content)
+        self.layout_table = WrapLayout([self.table, self.layout_table_options])
 
         # 整体布局
         self.layout = QHBoxLayout()
@@ -255,6 +260,8 @@ class App(QWidget):
         """
         在主线程中定义一个槽函数，用于处理信号
         """
+        if self.block_signal: return
+
         if data == "no more":
             print("没有更多商品了")
 
@@ -315,7 +322,15 @@ class App(QWidget):
                 case "新增":
                     for item in data:
                         if self.show_item: self.AddItemToTable(item)
-                        for db in self.dbs: db.store(item) # 存入主表
+                        for db in self.dbs.copy():
+                            success = db.store(item, error_echo=False) # 存入主表
+                            if not success: # 如果记录已经在当前数据库中存在
+                                self.dbs.remove(db) # 把当前数据库从数据库列表中删除，即之后新记录不会再存入当前数据库
+                    if len(self.dbs) == 0: # 如果所有数据库都已经存在相同记录，则结束当前爬取任务
+                        self.Finish()
+                        self.block_signal = True
+                        QMessageBox.information(self, " ", "没有更多新商品了", QMessageBox.Ok)
+                        
 
     def AddItemToTable(self, item: Item):
         record = [item.name, str(item.price), str(item.origin_price), f"{'%.2f'%item.discount}", item.process_url()]
@@ -323,7 +338,7 @@ class App(QWidget):
         for i in range(len(record)):
             self.table.setItem(self.table.rowCount() - 1, i, QTableWidgetItem(record[i]))
         # 表格滚动条自动滚动到底部
-        self.table.scrollToBottom()
+        if self.auto_scroll: self.table.scrollToBottom()
 
     def TestCookieExist(self):
         try:
@@ -377,8 +392,9 @@ class App(QWidget):
         self.table.setRowCount(0)
 
         # 启动子线程
-        self.run_thread.start()
+        self.block_signal = False
         self.status = "running"
+        self.run_thread.start()
         # self.statusBar().showMessage("开始爬取")
 
     def Pause(self):
@@ -509,6 +525,9 @@ class App(QWidget):
         self.show_item = self.checkbox_show_item.isChecked()
         print("show item" if self.checkbox_show_item.isChecked() else "not show item")
 
+    def OnChangeAutoScroll(self):
+        self.auto_scroll = self.checkbox_auto_scroll.isChecked()
+        print("auto scroll" if self.checkbox_auto_scroll.isChecked() else "not auto scroll")
 
     
 if __name__ == '__main__':
