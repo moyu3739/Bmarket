@@ -53,10 +53,12 @@ def pull(category: str, sort: str, db_type: str, use_proxy = False, show_item_in
         try:
             next_id, fetched = bmarket.fetch(next_id, category2id(category), sort2type(sort), keywords, shieldwords)
             for item in fetched:
-                # flag = db.store(item, False)
-                for db in dbs: db.store(item, False)
-                if not flag: break
-                if show_item_info: print(item.info())
+                for db in dbs.copy():
+                    success = db.store(item, error_echo=False) # 存入主表
+                    if not success: # 如果记录已经在当前数据库中存在
+                        dbs.remove(db) # 把当前数据库从数据库列表中删除，即之后新记录不会再存入当前数据库
+            if len(dbs) == 0: break # 如果所有数据库都已经存在相同记录，则结束当前爬取任务
+
             count_item += len(fetched)
             if count_item % 100 == 0:
                 print(f"已获取 {count_item} 条记录")
