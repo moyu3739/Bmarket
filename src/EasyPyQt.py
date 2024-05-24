@@ -1,17 +1,14 @@
-import sys
 import PyQt5
 import PyQt5.QtCore
-from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import *
-from PyQt5.QtGui import QPixmap, QIcon, QPalette, QBrush
-from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtGui import QPixmap, QIcon
 
 
 def WrapLayout(items, direct = "V"):
     """
     wrap items into a layout
     `items`: `list[QWidget | QVBoxLayout | QHBoxLayout]`
-    `direct`: "V" for QVBoxLayout, "H" for QHBoxLayout
+    `direct`: "V" for wrapping into a QVBoxLayout, "H" for wrapping into a QHBoxLayout
     """
     layout = QVBoxLayout() if direct == "V" else QHBoxLayout()
     for item in items:
@@ -25,7 +22,7 @@ def WrapGroup(parent, group_title, items, direct = "V", w = "Auto", h = "Auto"):
     """
     wrap items into a group
     `items`: `list[QWidget | QVBoxLayout | QHBoxLayout]`
-    `direct`: "V" for QVBoxLayout, "H" for QHBoxLayout
+    `direct`: "V" for wrapping into a QVBoxLayout, "H" for wrapping into a QHBoxLayout
     `w` `h`: width and height of the group, otherwise not fixed if "Auto", 
     """
     group = QGroupBox(group_title, parent)
@@ -196,7 +193,7 @@ def ImageButton(parent, src, tip = "", p_x = 0, p_y = 0, w = "Auto", h = "Auto",
 
     return button
 
-def Textbox(parent, init_text = "", p_x = 0, p_y = 0, w = "Auto", h = "Auto", on_change = None):
+def Textbox(parent, init_text = "", placeholder = "", p_x = 0, p_y = 0, w = "Auto", h = "Auto", on_change = None):
     """
     `parent`: parent QWidget. If put in a layout, you can use `None` and then call `layout.addWidget`
     `on_change`: `(text) -> None`
@@ -207,6 +204,52 @@ def Textbox(parent, init_text = "", p_x = 0, p_y = 0, w = "Auto", h = "Auto", on
         textbox.textChanged.connect(on_change)
     # init text
     textbox.setText(init_text)
+    # placeholder
+    textbox.setPlaceholderText(placeholder)
+    # geometry
+    textbox.move(p_x, p_y)
+    textbox.adjustSize()
+    if w != "Auto": textbox.setFixedWidth(w)
+    if h != "Auto": textbox.setFixedHeight(h)
+
+    return textbox
+
+def MultiLineTextbox(parent, init_text = "", placeholder = "", p_x = 0, p_y = 0, w = "Auto", h = "Auto", on_change = None):
+    """
+    This is a multi-line textbox WITH text formatting
+    `parent`: parent QWidget. If put in a layout, you can use `None` and then call `layout.addWidget`
+    `on_change`: `(text) -> None`
+    """
+    textbox = QTextEdit(parent)
+    # on_change event
+    if on_change != None:
+        textbox.textChanged.connect(lambda: on_change(textbox.toPlainText()))
+    # init text
+    textbox.setPlainText(init_text)
+    # placeholder
+    textbox.setPlaceholderText(placeholder)
+    # geometry
+    textbox.move(p_x, p_y)
+    textbox.adjustSize()
+    if w != "Auto": textbox.setFixedWidth(w)
+    if h != "Auto": textbox.setFixedHeight(h)
+
+    return textbox
+
+def MultiLinePlainTextbox(parent, init_text = "", placeholder = "", p_x = 0, p_y = 0, w = "Auto", h = "Auto", on_change = None):
+    """
+    This is a multi-line textbox WITHOUT text formatting
+    `parent`: parent QWidget. If put in a layout, you can use `None` and then call `layout.addWidget`
+    `on_change`: `(text) -> None`
+    """
+    textbox = QPlainTextEdit(parent)
+    # on_change event
+    if on_change != None:
+        textbox.textChanged.connect(lambda: on_change(textbox.toPlainText()))
+    # init text
+    textbox.setPlainText(init_text)
+    # placeholder
+    textbox.setPlaceholderText(placeholder)
     # geometry
     textbox.move(p_x, p_y)
     textbox.adjustSize()

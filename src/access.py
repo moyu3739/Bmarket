@@ -5,7 +5,7 @@ from item import Item
 
 def get_cookie():
     try:
-        with open("cookie.txt", "r") as f:
+        with open("cookie.txt", "r", encoding="utf-8") as f:
             return f.read()
     except:
         raise FileNotFoundError("缺少 cookie.txt 文件")

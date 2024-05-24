@@ -1,6 +1,5 @@
-from random import randint
+import json
 from pymysql import connect
-from configparser import ConfigParser
 from time import strftime, localtime
 from item import Item
 
@@ -9,23 +8,18 @@ def GetTime():
     return strftime("%Y-%m-%d %H:%M:%S", localtime())
 
 def read_mysql_config(file_path):
-    cfp = ConfigParser()
-    flag = cfp.read(file_path,encoding='utf-8')
-    if not flag:
-        raise FileNotFoundError(f"缺少配置文件 '{file_path}'")
-    
+    # 读取 config.json 文件，如果文件不存在或格式错误则抛出异常
     try:
-        config = {}
-        config["host"] = cfp.get('mysql config', 'host')
-        config["port"] = cfp.get('mysql config', 'port')
-        config["user"] = cfp.get('mysql config', 'user')
-        config["passwd"] = cfp.get('mysql config', 'passwd')
-        config["db"] = cfp.get('mysql config', 'db')
-        config["charset"] = cfp.get('mysql config', 'charset')
-        return config
+        with open(file_path, "r", encoding="utf-8") as f:
+            mysql_config = json.load(f)["config"]["mysql"]
     except:
-        # raise Exception(f"配置文件 {file_path} 格式错误，或未包含必要字段：host, port, user, passwd, db, charset")
-        raise Exception(f"配置文件 {file_path} 格式错误")
+        raise Exception(f"MySQL 配置缺失或错误，请重新配置")
+    
+    # 检查 mysql_config 是否包含 host, port, user, passwd, db, charset 字段，否则抛出异常
+    if not all([key in mysql_config for key in ["host", "port", "user", "passwd", "db", "charset"]]):
+        raise Exception(f"MySQL 配置缺失或错误，请重新配置")
+    
+    return mysql_config
 
 class DB:
     connect_on: bool
@@ -33,7 +27,7 @@ class DB:
     main_table = "main"
     tmp_table = "tmp_main"
 
-    def __init__(self, main_table = "main", config_file = "./config.txt"):
+    def __init__(self, main_table = "main", config_file = "config.json"):
         config = read_mysql_config(config_file)
         self.tmp_table = "tmp_" + main_table
         try:
@@ -51,7 +45,7 @@ class DB:
             self.drop_table(self.tmp_table, False)
             self.create_table(self.tmp_table, False)
         except:
-            raise ConnectionError("MySQL 数据库连接失败")
+            raise ConnectionError("MySQL 连接失败")
 
     def disconnect(self):
         if not self.connect_on: return

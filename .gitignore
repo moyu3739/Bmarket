@@ -10,4 +10,5 @@ src/db
 src/build
 src/dist
 src/*.txt
+src/*.json
 *.spec

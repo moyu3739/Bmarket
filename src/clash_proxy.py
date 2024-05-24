@@ -1,26 +1,24 @@
+import json
 from concurrent.futures import ThreadPoolExecutor
-from configparser import ConfigParser
 from clashAPI import Selector, Mode, clashAPI
 
 
 def read_proxy_config(file_path):
-    cfp = ConfigParser()
-    flag = cfp.read(file_path, encoding='utf-8')
-    if not flag:
-        raise FileNotFoundError(f"缺少配置文件 '{file_path}'")
-
+    # 读取 config.json 文件
     try:
-        config = {}
-        config["host"] = cfp.get('clash config', 'host')
-        config["port"] = cfp.get('clash config', 'port')
-        config["selector"] = cfp.get('clash config', 'selector')
-        config["secret"] = cfp.get('clash config', 'secret')
-        return config
+        with open(file_path, "r", encoding="utf-8") as f:
+            clash_config = json.load(f)["config"]["clash"]
     except:
-        raise Exception(f"配置文件 {file_path} 格式错误，请检查是否有 [clash config] 段，以及其中是否包含必要字段：host, port, selector, secret")
+        raise Exception(f"Clash 配置缺失或错误，请重新配置")
+    
+    # 检查 clash_config 是否包含 host, port, selector, secret 字段
+    if not all([key in clash_config for key in ["host", "port", "selector", "secret"]]):
+        raise Exception(f"Clash 配置缺失或错误，请重新配置")
+    
+    return clash_config    
 
 class proxy:
-    def __init__(self, config_file = "./config.txt"):
+    def __init__(self, config_file = "config.json"):
         config = read_proxy_config(config_file)
         self.host = config["host"]
         self.port = config["port"]

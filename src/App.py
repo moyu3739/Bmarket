@@ -1,10 +1,10 @@
 import sys
-from threading import Thread
-from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QPushButton, QAction, QLineEdit, QMessageBox, QComboBox, QGroupBox
+from PyQt5.QtWidgets import QApplication, QWidget, QMessageBox
 from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import QThread, pyqtSignal, QTimer
 
 from EasyPyQt import *
+from EditWindow import *
 
 from item import Item
 from access import access, get_cookie
@@ -75,40 +75,45 @@ class RunThread(QThread):
         self.item_type = item_type # 商品类型
         self.sort = sort # 排序方式
         self.use_clash = use_clash # 是否使用Clash代理
-        
         self.bmarket = Bmarket(self.item_type, self.sort) # 连接市集
         self.running = True
 
     def run(self):
         try:
+            self.emit("status", "正在连接 Clash...")
             self.clash = ClashProxy() if self.use_clash else None
+            self.emit("status", "正在爬取")
         except Exception as e:
-            self.running = False
-            self.signal.emit(str(e)) # 发送错误信息
+            self.interrupt("msg", str(e)) # 发送错误信息
             return
 
         while self.running:
             fetched = self.bmarket.Fetch()
             if fetched == "no more":
-                self.interrupt(fetched)
+                self.interrupt("msg", "no more")
             elif fetched == "invalid cookie":
-                self.interrupt(fetched)
+                self.interrupt("msg", "invalid cookie")
             elif fetched == "reconnect failed":
                 if self.use_clash:
-                    print("自动重连失败，尝试切换代理...")
+                    print("自动重连失败，正在切换代理...")
+                    self.emit("status", "自动重连失败，正在切换代理...")
                     msg = self.clash.change_proxy() # 更换代理
                     if msg == "ok":
                         print(f"切换到代理 '{self.clash.now_proxy}'")
+                        self.emit("status", f"已切换到代理 '{self.clash.now_proxy}'")
                         continue
-                    else: self.interrupt(msg)
+                    else: self.interrupt("msg", msg)
                 else:
-                    self.interrupt(fetched)
+                    self.interrupt("msg", "reconnect failed")
             else: # have fetched items successfully
-                self.signal.emit(fetched)
+                self.emit("record", fetched)
 
-    def interrupt(self, data):
+    def emit(self, type, data):
+        self.signal.emit([type, data])
+
+    def interrupt(self, type, data):
         self.running = False
-        self.signal.emit(data)
+        self.signal.emit([type, data])
 
     def start(self):
         """
@@ -137,9 +142,8 @@ class App(QWidget):
         self.title = "Bmarket"
         self.left = 100
         self.top = 100
-        self.width = 800
-        self.height = 600
-        self.status = "stop"
+        self.width = 1000
+        self.height = 800
         self.InitUI()
         self.InitSetup()
 
@@ -154,10 +158,14 @@ class App(QWidget):
         self.auto_scroll = True
         self.run_thread = None
         self.dbs = []
+        self.status = "stop"
     
     def InitUI(self):
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
+
+        # 图标
+        self.setWindowIcon(QIcon("miku.png"))
     
         # 控制区
         self.InitControlGroup()
@@ -182,11 +190,16 @@ class App(QWidget):
         self.layout_table = WrapLayout([self.table, self.layout_table_options])
 
         # 整体布局
-        self.layout = QHBoxLayout()
-        self.layout.addLayout(self.layout_table)
-        self.layout.addWidget(self.button_hide_ctrl)
-        self.layout.addWidget(self.group_ctrl)
-        self.setLayout(self.layout)
+        self.layout = WrapLayout([self.layout_table, self.button_hide_ctrl, self.group_ctrl], "H")
+
+        # 状态栏
+        self.status_bar = QStatusBar(self)
+        self.status_bar.setStyleSheet("background-color: #ccc;")
+        self.SetStatus("准备就绪")
+
+        # 窗体布局
+        self.layout_main = WrapLayout([self.layout, self.status_bar], "V")
+        self.setLayout(self.layout_main)
 
         self.show()
 
@@ -209,7 +222,8 @@ class App(QWidget):
 
         # cookie设置
         self.button_edit_cookie = Button(self, "编辑Cookie", h=40, on_click=self.OnClickEditCookie)
-        self.group_edit_cookie = WrapGroup(self, "Cookie", [self.button_edit_cookie])
+        self.button_test_cookie = Button(self, "测试Cookie", h=40, on_click=self.OnClickTestCookie)
+        self.group_edit_cookie = WrapGroup(self, "Cookie", [self.button_edit_cookie, self.button_test_cookie], "H")
         
         # 选择使用的数据库
         # self.group_dbs_used, self.box_dbs_used = self.WrapCheckBoxs(self, "使用数据库", ["MySQL", "SQLite"])
@@ -256,64 +270,78 @@ class App(QWidget):
     ############################################################################################
     ####                                  以下是一些功能函数                                 ####
     ############################################################################################
-    def HandleSignal(self, data):
+    def HandleSignal(self, signal):
         """
         在主线程中定义一个槽函数，用于处理信号
         """
         if self.block_signal: return
+        [type, data] = signal
 
-        if data == "no more":
-            print("没有更多商品了")
+        if type == "msg":
+            match data:
+                case "no more":
+                    print("没有更多商品了")
 
-            # 如果插入数据库方式为“合并”，则删除无效数据并将临时表数据合并到主表
-            if self.insert_method == "合并":
-                for db in self.dbs:
-                    db.remove_invalid()
-                    db.flush_new()
-            self.Finish() # 结束当前爬取任务
-            QMessageBox.information(self, " ", "没有更多商品了", QMessageBox.Ok)
-        elif data == "invalid cookie":
-            print("Cookie 无效，请更新 Cookie")
-            self.Finish() # 结束当前爬取任务
-            QMessageBox.warning(self, " ", "Cookie 无效，请更新 Cookie", QMessageBox.Ok)
-        elif data == "reconnect failed":
-            print("自动重连失败，请选择接下来的操作...")
-            
-            # 选择接下来的操作
-            # 如果使用数据库，则增加两个选项：新增记录、合并记录
-            choices = ["再次重连", "直接结束"]
-            tips = [
-                "再次尝试连接市集，程序会继续运行，本次爬取已经获取到的记录不会丢失",
-                "直接结束本次爬取，本次爬取已经获取到的记录将被丢弃，数据库不会被更新",
-            ]
-            if self.use_mysql or self.use_sqlite:
-                choices.extend(["新增记录", "合并记录"])
-                tips.extend([
-                    "将本次爬取已经获取到的记录新增到数据库中，但不会删除无效数据，然后结束本次爬取",
-                    "将本次爬取已经获取到的记录合并到数据库中，会删除无效数据，但可能丢失数据库中已有记录，然后结束本次爬取",
-                ])
+                    # 如果插入数据库方式为“合并”，则删除无效数据并将临时表数据合并到主表
+                    if self.insert_method == "合并": self.MergeDB()
+                    self.Finish() # 结束当前爬取任务
+                    QMessageBox.information(self, " ", "没有更多商品了", QMessageBox.Ok)
+                case "invalid cookie":
+                    print("Cookie 无效，请更新 Cookie")
+                    self.Finish() # 结束当前爬取任务
+                    QMessageBox.critical(self, " ", "Cookie 无效，请更新 Cookie", QMessageBox.Ok)
+                case "reconnect failed":
+                    print("自动重连失败，请选择接下来的操作...")
 
-            # 弹出消息框，让用户选择接下来的操作
-            operate = GetChoiceFromMessageBox(" ", "自动重连失败，请选择接下来的操作", choices, tips)
-            match operate:
-                case "再次重连":
-                    self.run_thread.wait() # 等待Run线程结束
-                    self.Continue() # 重新开始Run线程
-                case "直接结束":
-                    self.Finish() # 结束当前爬取任务
-                case "新增记录":
-                    for db in self.dbs: db.flush_new()
-                    self.Finish() # 结束当前爬取任务
-                case "合并记录":
-                    for db in self.dbs:
-                        db.remove_invalid()
-                        db.flush_new()
-                    self.Finish() # 结束当前爬取任务
-        elif isinstance(data, str): # 其他情况下，暂停爬取并弹出消息框
-            print(data)
-            self.Pause() # 暂停当前爬取任务
-            QMessageBox.warning(self, " ", data, QMessageBox.Ok)
-        else: # data: list[item]
+                    choices_simple = ["再次重连", "直接结束"]
+                    tips_simple = [
+                        "再次尝试连接市集，程序会继续运行，本次爬取已经获取到的记录不会丢失",
+                        "本次爬取已经获取到的记录将被丢弃，数据库不会被更新",
+                    ]
+                    choices_complex = ["再次重连", "直接结束", "新增记录", "合并记录"]
+                    tips_complex = [
+                        "再次尝试连接市集，程序会继续运行，本次爬取已经获取到的记录不会丢失",
+                        "本次爬取已经获取到的记录将被丢弃，数据库不会被更新",
+                        "将本次爬取已经获取到的记录新增到数据库中，但不会删除无效数据，然后结束本次爬取",
+                        "将本次爬取已经获取到的记录合并到数据库中，会删除无效数据，但可能丢失数据库中已有的有效记录，然后结束本次爬取",
+                    ]
+                    
+                    # 选择接下来的操作
+                    # 如果使用数据库且插入数据库方式为“合并”，则增加两个选项：新增记录、合并记录
+                    if self.insert_method == "合并" and (self.use_mysql or self.use_sqlite):
+                        choices = choices_complex
+                        tips = tips_complex
+                    else:
+                        choices = choices_simple
+                        tips = tips_simple
+
+                    # 弹出消息框，让用户选择接下来的操作
+                    operate = GetChoiceFromMessageBox(" ", "自动重连失败，请选择接下来的操作", choices, tips)
+                    match operate:
+                        case "再次重连":
+                            self.run_thread.wait() # 等待Run线程结束
+                            self.Continue() # 重新开始Run线程
+                        case "直接结束":
+                            self.Finish() # 结束当前爬取任务
+                        case "新增记录":
+                            self.UpdateDB()
+                            self.Finish() # 结束当前爬取任务
+                        case "合并记录":
+                            self.MergeDB()
+                            self.Finish() # 结束当前爬取任务
+                case _: # 其他消息，暂停爬取并弹出消息框
+                    print(data)
+                    self.Pause() # 暂停当前爬取任务
+                    QMessageBox.critical(self, " ", data, QMessageBox.Ok)
+
+        elif type == "status":
+            self.SetStatus(data)
+            if data.startswith("已切换到代理"): # 若状态信息为切换到新代理，则3秒后将状态设为“准备就绪”
+                def SetStatusReady():
+                    if self.status == "running": self.SetStatus("正在爬取")
+                QTimer.singleShot(3000, SetStatusReady) # 定时3秒之后将状态设为“准备就绪”
+                    
+        elif type == "record": # data: list[item]
             match self.insert_method:
                 case "合并":
                     for item in data:
@@ -331,6 +359,19 @@ class App(QWidget):
                         self.block_signal = True
                         QMessageBox.information(self, " ", "没有更多新商品了", QMessageBox.Ok)
                         
+    def MergeDB(self):
+        """
+        合并临时表记录到主表中
+        """
+        for db in self.dbs:
+            db.remove_invalid()
+            db.flush_new()
+
+    def UpdateDB(self):
+        """
+        将临时表记录新增到主表中（不删除无效数据）
+        """
+        for db in self.dbs: db.flush_new()
 
     def AddItemToTable(self, item: Item):
         record = [item.name, str(item.price), str(item.origin_price), f"{'%.2f'%item.discount}", item.process_url()]
@@ -340,12 +381,8 @@ class App(QWidget):
         # 表格滚动条自动滚动到底部
         if self.auto_scroll: self.table.scrollToBottom()
 
-    def TestCookieExist(self):
-        try:
-            get_cookie()
-            return True
-        except Exception as e:
-            QMessageBox.warning(self, " ", str(e), QMessageBox.Ok)
+    def SetStatus(self, status: str):
+        self.status_bar.showMessage("当前状态：" + status)
 
     def Quit(self):
         """
@@ -367,7 +404,7 @@ class App(QWidget):
             self.run_thread = RunThread(self.item_type, self.sort, self.use_clash)
             self.run_thread.signal.connect(self.HandleSignal)
         except Exception as e:
-            QMessageBox.warning(self, " ", str(e), QMessageBox.Ok)
+            QMessageBox.critical(self, " ", str(e), QMessageBox.Ok)
             return
 
         # 显示暂停按钮，隐藏其他按钮
@@ -395,7 +432,7 @@ class App(QWidget):
         self.block_signal = False
         self.status = "running"
         self.run_thread.start()
-        # self.statusBar().showMessage("开始爬取")
+        self.SetStatus("正在爬取")
 
     def Pause(self):
         # 发送暂停信号
@@ -411,7 +448,49 @@ class App(QWidget):
         self.button_test_clash.setEnabled(True)
 
         self.status = "pause"
-        # self.statusBar().showMessage("爬取暂停")
+        self.SetStatus("已暂停")
+
+    def FinishUserOperate(self):
+        """
+        结束当前爬取任务后，根据用户选择的操作进行相应的操作
+        `return`: 是否结束当前爬取任务
+        """
+        choices_simple = ["直接结束", "取消"]
+        tips_simple = ["本次爬取已经获取到的记录将被丢弃，数据库不会被更新"]
+        choices_complex = ["直接结束", "新增记录", "合并记录", "取消"]
+        tips_complex = [
+            "本次爬取已经获取到的记录将被丢弃，数据库不会被更新",
+            "将本次爬取已经获取到的记录新增到数据库中，但不会删除无效数据",
+            "将本次爬取已经获取到的记录合并到数据库中，会删除无效数据，但可能丢失数据库中已有的有效记录",
+        ]
+
+        # 选择接下来的操作
+        choices = []
+        tips = []
+        # 如果使用数据库且插入数据库方式为“合并”，则增加两个选项：新增记录、合并记录
+        if self.insert_method == "合并" and (self.use_mysql or self.use_sqlite):
+            choices = choices_complex
+            tips = tips_complex
+        else:
+            choices = choices_simple
+            tips = tips_simple
+
+        # 弹出消息框，让用户选择接下来的操作
+        operate = GetChoiceFromMessageBox(" ", "你结束了当前爬取任务，请选择接下来的操作", choices, tips)
+        match operate:
+            case "新增记录":
+                self.UpdateDB()
+                self.Finish() # 结束当前爬取任务
+                return True
+            case "合并记录":
+                self.MergeDB()
+                self.Finish() # 结束当前爬取任务
+                return True
+            case "直接结束":
+                self.Finish() # 结束当前爬取任务
+                return True
+            case "取消":
+                return False
 
     def Finish(self):
         # 发送暂停信号
@@ -436,7 +515,10 @@ class App(QWidget):
         
         for db in self.dbs: db.disconnect() # 断开数据库连接
         self.status = "stop"
-        # self.statusBar().showMessage("爬取结束")
+        self.SetStatus("爬取结束")
+        def SetStatusReady():
+            if self.status == "stop": self.SetStatus("准备就绪")
+        QTimer.singleShot(3000, SetStatusReady) # 定时3秒之后将状态设为“准备就绪”
 
     def Continue(self):
         # 显示暂停按钮，隐藏其他按钮
@@ -449,9 +531,9 @@ class App(QWidget):
         self.button_setup_clash.setEnabled(False)
         self.button_test_clash.setEnabled(False)
 
-        self.run_thread.start()
         self.status = "running"
-        # self.statusBar().showMessage("继续爬取")
+        self.run_thread.start()
+        self.SetStatus("正在爬取")
 
     ############################################################################################
     ####                                以下是各种事件处理函数                                ####
@@ -475,7 +557,18 @@ class App(QWidget):
 
     def OnClickEditCookie(self):
         print("edit cookie")
-        # ...
+        edit_window = CookieEditWindow()
+        edit_window.exec_()
+
+    def OnClickTestCookie(self):
+        print("test cookie")
+        try:
+            bmarket_test = Bmarket("全部", "时间降序（推荐）") # 其中会尝试打开 cookie.txt 文件，若文件不存在会抛出异常
+            res = bmarket_test.Fetch() # 会使用 cookie.txt 文件中的 Cookie 访问市集
+            if res == "invalid cookie": raise Exception() # 若返回 "invalid cookie" 则抛出异常
+            QMessageBox.information(self, " ", "Cookie 有效，市集连接成功", QMessageBox.Ok)
+        except:
+            QMessageBox.critical(self, " ", "Cookie 缺失或已失效，请重新配置 Cookie", QMessageBox.Ok)
 
     def OnChangeUseMySQL(self):
         self.use_mysql = self.box_use_mysql.isChecked()
@@ -495,19 +588,29 @@ class App(QWidget):
         
     def OnClickSetupMySQL(self):
         print("Setup MySQL")
-        # ...
+        edit_window = MySQLConfigEditWindow()
+        edit_window.exec_()
 
     def OnClickTestMySQL(self):
         print("Test MySQL")
-        # ...
+        try:
+            _ = MySQLDB()
+            QMessageBox.information(self, " ", "MySQL 连接成功", QMessageBox.Ok)
+        except Exception as e:
+            QMessageBox.critical(self, " ", str(e), QMessageBox.Ok)
 
     def OnClickSetupClash(self):
         print("Setup Clash")
-        # ...
+        edit_window = ClashConfigEditWindow()
+        edit_window.exec_()
 
     def OnClickTestClash(self):
         print("Test Clash")
-        # ...
+        try:
+            _ = ClashProxy()
+            QMessageBox.information(self, " ", "Clash 连接成功", QMessageBox.Ok)
+        except Exception as e:
+            QMessageBox.critical(self, " ", str(e), QMessageBox.Ok)
 
     def OnClickStart(self):
         self.Start()
@@ -516,7 +619,8 @@ class App(QWidget):
         self.Pause()
 
     def OnClickFinish(self):
-        self.Finish()
+        if self.FinishUserOperate():
+            self.Finish()
 
     def OnClickContinue(self):
         self.Continue()
