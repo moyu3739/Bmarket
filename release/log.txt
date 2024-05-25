@@ -1,0 +1,2 @@
+show item
+auto scroll
