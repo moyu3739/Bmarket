@@ -1,0 +1,18 @@
+{
+    "config": {
+        "mysql": {
+            "host": "localhost",
+            "port": "3306",
+            "user": "",
+            "passwd": "",
+            "db": "Bmarket",
+            "charset": "utf8"
+        },
+        "clash": {
+            "host": "localhost",
+            "port": "9090",
+            "selector": "PayPal",
+            "secret": ""
+        }
+    }
+}
