@@ -8,7 +8,7 @@ def get_cookie():
         with open("cookie.txt", "r", encoding="utf-8") as f:
             return f.read()
     except:
-        raise FileNotFoundError("缺少 cookie.txt 文件")
+        raise FileNotFoundError("Cookie 缺失或已失效，请重新配置 Cookie")
 
 class access:
     def __init__(self):

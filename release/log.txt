@@ -1,0 +1,7 @@
+show item
+auto scroll
+use sqlite
+edit cookie
+test cookie
+开始获取商品信息...
+开始获取商品信息...

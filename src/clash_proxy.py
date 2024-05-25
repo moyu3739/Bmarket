@@ -3,7 +3,7 @@ from concurrent.futures import ThreadPoolExecutor
 from clashAPI import Selector, Mode, clashAPI
 
 
-def read_proxy_config(file_path):
+def read_proxy_config(file_path = "config.json"):
     # 读取 config.json 文件
     try:
         with open(file_path, "r", encoding="utf-8") as f:

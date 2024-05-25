@@ -1,70 +1,21 @@
 import sys
+import webbrowser
+import PyQt5
+
 from PyQt5.QtWidgets import QApplication, QWidget, QMessageBox
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import QThread, pyqtSignal, QTimer
 
 from EasyPyQt import *
 from EditWindow import *
+from Log import *
 
-from item import Item
-from access import access, get_cookie
+from item import Item, Filter, NameFilter
 from Bmarket import Bmarket
 from mysql_database import DB as MySQLDB
 from sqlite_database import DB as SQLiteDB
-from clash_proxy import proxy as ClashProxy
+from clash_proxy import proxy as ClashProxy, read_proxy_config
 
-example_content = [
-    ["FuRyu 初音未来 恋爱水手服灰色Ver. 景品手办" , "71.00" , "115.00" , "0.62" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41541953150&from=market_index"],
-    ["TAITO AFG 初音未来 景品手办 再版" , "75.00" , "112.00" , "0.67" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41546391856&from=market_index"],
-    ["世嘉 阿尼亚·福杰 夏日度假 景品手办" , "85.00" , "109.00" , "0.78" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41547663345&from=market_index"],
-    ["寿屋 赛马娘 Pretty Derby 北部玄驹 手办" , "800.00","1022.00" , "0.78" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41548372436&from=market_index"],
-    ["AniMester大漫匠 芙洛伦 手办" , "240.00" , "299.00" , "0.80" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41548950188&from=market_index"],
-    ["GSAS 大道寺知世 手办" , "180.00" , "245.00" , "0.73" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41549071758&from=market_index"],
-    ["世嘉 樱岛麻衣 夏裙Ver. 景品手办" , "80.00" , "109.00" , "0.73" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41549172105&from=market_index"],
-    ["FuRyu 初音未来 新东京和服 手办 等4个商品" , "460.00" , "605.00" , "0.76" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41549311029&from=market_index"],
-    ["ACTOYS 涂山红红 盛夏绽放 泳装Ver. 手办" , "269.00" , "580.00" , "0.46" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41549386607&from=market_index"],
-    ["FuRyu 初音未来 热带果汁 景品手办" , "78.00" , "129.00" , "0.60" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41549509507&from=market_index"],
-    ["TAITO 惠惠 水着ver. 景品手办" , "89.99" , "112.00" , "0.80" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41549777866&from=market_index"],
-    ["TAITO 雷姆 护士女仆Renewal  景品手办 等7个商品" , "520.00" , "784.00" , "0.66" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41550109404&from=market_index"],
-    ["角川 熊熊勇闯异世界 优奈 手办" , "600.00" , "1157.00" , "0.52" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41550366113&from=market_index"],
-    ["TAITO 后藤独 私服ver. 景品手办" , "89.99" , "112.00" , "0.80" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41550765359&from=market_index"],
-    ["世嘉 樱岛麻衣 CASUAL CLOTHES 景品手办" , "65.00" , "109.00" , "0.60" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41551552417&from=market_index"],
-    ["Plum 哈曼 改 手办 再版" , "666.00" , "764.00" , "0.87" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41551820483&from=market_index"],
-    ["世嘉 中野二乃 景品手办" , "66.10" , "109.00" , "0.61" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41551925334&from=market_index"],
-    ["FuRyu 初音未来 恋爱水手服灰色Ver. 景品手办" , "75.00" , "115.00" , "0.65" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41552525074&from=market_index"],
-    ["GSC 初音未来 交响乐2022Ver. 手办" , "1300.00","1499.00" , "0.87" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41552576024&from=market_index"],
-    ["TAITO 喜多郁代 私服ver. 景品手办 等2个商品" , "180.00" , "224.00" , "0.80" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41552587931&from=market_index"],
-    ["世嘉 江户川柯南 椅子Ver. 景品手办 再版" , "80.00" , "105.00" , "0.76" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41553105123&from=market_index"],
-    ["世嘉 加藤惠 居家睡衣 景品手办" , "69.00" , "109.00" , "0.63" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41553338175&from=market_index"],
-    ["AniMester大漫匠 芙洛伦 手办" , "240.00" , "299.00" , "0.80" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41553398319&from=market_index"],
-    ["Max Factory 喜多川海梦 手办" , "629.99" , "775.00" , "0.81" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41553413381&from=market_index"],
-    ["世嘉 埃列什基伽勒 景品手办" , "75.00" , "115.00" , "0.65" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41553442680&from=market_index"],
-    ["ACTOYS 涂山红红 盛夏绽放 泳装Ver. 手办" , "260.00" , "580.00" , "0.45" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41554017793&from=market_index"],
-    ["AniMester大漫匠 明日香 手办" , "720.00" , "980.00" , "0.73" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41554042013&from=market_index"],
-    ["FuRyu 后藤独 景品手办" , "72.00" , "119.00" , "0.61" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41554263428&from=market_index"],
-    ["世嘉 中野二乃 景品手办" , "55.00" , "109.00" , "0.50" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41554478342&from=market_index"],
-    ["FuRyu 雅儿贝德 泳装  景品手办" , "75.00" , "115.00" , "0.65" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41554498294&from=market_index"],
-    ["世嘉 莱莎琳·斯托特 景品手办 等2个商品" , "140.00" , "218.00" , "0.64" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41555789558&from=market_index"],
-    ["TAITO 喜多郁代 私服ver. 景品手办" , "89.99" , "112.00" , "0.80" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41556032209&from=market_index"],
-    ["TAITO 星野露比 制服ver. 景品手办 等2个商品" , "180.00" , "224.00" , "0.80" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41556144925&from=market_index"],
-    ["F:NEX VOCALOID 初音未来 科技魔法ver. 手办","1250.00","1499.00" , "0.83" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41556299820&from=market_index"],
-    ["TAITO 有马加奈 B小町ver. 景品手办" , "89.99" , "112.00" , "0.80" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41557028235&from=market_index"],
-    ["FuRyu 雅儿贝德 泳装  景品手办" , "75.00" , "115.00" , "0.65" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41557041271&from=market_index"],
-    ["FuRyu 芙莉莲 景品手办 再版" , "75.00" , "115.00" , "0.65" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41557048011&from=market_index"],
-    ["FuRyu 初音未来 紫罗兰 景品手办" , "90.00" , "129.00" , "0.70" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41557061310&from=market_index"],
-    ["Plum 香草 Q版手办" , "130.00" , "142.00" , "0.92" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41557185812&from=market_index"],
-    ["Ensoutoys 兔女郎丽奈 正比手办" , "560.00" , "699.00" , "0.80" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41557356378&from=market_index"],
-    ["寿屋 美少女雕像系列 拳皇2001 安琪尔 手办" , "638.00" , "796.00" , "0.80" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41557362294&from=market_index"],
-    ["GSC 月 Q版手办" , "369.00" , "369.00" , "1.00" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41557762663&from=market_index"],
-    ["TAITO 白 Renewal ver.  景品手办" , "70.00" , "112.00" , "0.63" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41558450507&from=market_index"],
-    ["TAITO 白 Renewal ver.  景品手办" , "69.00" , "112.00" , "0.62" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41558748485&from=market_index"],
-    ["FuRyu 雷姆 花仙子 景品手办" , "79.00" , "115.00" , "0.69" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41558813353&from=market_index"],
-    ["FuRyu 雅儿贝德 泳装  景品手办" , "80.00" , "115.00" , "0.70" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41558935623&from=market_index"],
-    ["FuRyu 后藤独 景品手办" , "72.00" , "119.00" , "0.61" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41559140681&from=market_index"],
-    ["Union Creative 出包王女 露恩·艾尔西·裘利亚 Darkness Ver. 手办" , "719.00" , "799.00" , "0.90" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41559499372&from=market_index"],
-    ["世嘉 初音未来 star voice 景品手办" , "65.00" , "109.00" , "0.60" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41559857725&from=market_index"],
-    ["Alphamax 约会大作战 时崎狂三 睡衣ver. 手办 再版" , "688.00" , "735.00" , "0.94" , "https://mall.bilibili.com/neul-next/index.html?page=magic-market_detail&noTitleBar=1&itemsId=41560007859&from=market_index"],
-]
 
 class RunThread(QThread):
     # 定义一个信号，用于在子线程中发出，主线程中接收
@@ -95,11 +46,11 @@ class RunThread(QThread):
                 self.interrupt("msg", "invalid cookie")
             elif fetched == "reconnect failed":
                 if self.use_clash:
-                    print("自动重连失败，正在切换代理...")
+                    Print("自动重连失败，正在切换代理...")
                     self.emit("status", "自动重连失败，正在切换代理...")
                     msg = self.clash.change_proxy() # 更换代理
                     if msg == "ok":
-                        print(f"切换到代理 '{self.clash.now_proxy}'")
+                        Print(f"切换到代理 '{self.clash.now_proxy}'")
                         self.emit("status", f"已切换到代理 '{self.clash.now_proxy}'")
                         continue
                     else: self.interrupt("msg", msg)
@@ -128,13 +79,6 @@ class RunThread(QThread):
         """
         self.running = False
             
-    def quit(self):
-        """
-        发送停止信号，然后等待线程结束
-        """
-        self.running = False # 发送停止信号
-        self.wait() # 等待线程结束
-            
 
 class App(QWidget):
     def __init__(self):
@@ -142,8 +86,8 @@ class App(QWidget):
         self.title = "Bmarket"
         self.left = 100
         self.top = 100
-        self.width = 1000
-        self.height = 800
+        self.width = 1230
+        self.height = 900
         self.InitUI()
         self.InitSetup()
 
@@ -159,13 +103,15 @@ class App(QWidget):
         self.run_thread = None
         self.dbs = []
         self.status = "stop"
+        self.all_items = []
+        self.filter = NameFilter("")
     
     def InitUI(self):
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
 
         # 图标
-        self.setWindowIcon(QIcon("miku.png"))
+        self.setWindowIcon(QIcon("icon.png"))
     
         # 控制区
         self.InitControlGroup()
@@ -180,14 +126,42 @@ class App(QWidget):
         )
 
         # 表格区
+        # 搜索框和搜索按钮
+        self.textbox_search = Textbox(self, placeholder="搜索商品", h=30, w=300)
+        self.textbox_search.setClearButtonEnabled(True)
+        self.button_search = Button(self, "🔍", h=30, w=30, on_click=self.OnClickSearch)
+        self.layout_search = WrapLayout([self.textbox_search, self.button_search], "H", align="left")
+        # 表格选项
         self.checkbox_show_item = CheckBox(self, "实时显示商品", on_change=self.OnChangeShowItem)
         self.checkbox_show_item.setChecked(True)
         self.checkbox_auto_scroll = CheckBox(self, "自动滚动到底部", on_change=self.OnChangeAutoScroll)
         self.checkbox_auto_scroll.setChecked(True)
-        self.layout_table_options = WrapLayout([self.checkbox_show_item, self.checkbox_auto_scroll], "H")
-
-        self.table = Table(self, header=["商品", "市集价", "原价", "市集折扣", "链接"], content=example_content)
-        self.layout_table = WrapLayout([self.table, self.layout_table_options])
+        self.layout_table_options = WrapLayout([self.checkbox_show_item, self.checkbox_auto_scroll], "H", align="left")
+        """
+        这里设计了两个表格分别用于显示完整数据和搜索结果
+        目的：提高搜索框为空时的搜索（即显示全部记录）速度，避免表格的插入操作对所有记录都执行一遍
+        方法：获取到记录时，无条件插入 `table` 表格，根据搜索框条件过滤后插入 `table_search` 表格。
+            搜索时，如果搜索框为空，将 `table_search` 表格设为隐藏状态，将 `table` 表格设为显示状态即可；
+            如果搜索框不为空，根据搜索框条件过滤全部记录 `all_items` 放进 `table_search` 表格，
+            并将 `table` 表格设为隐藏状态，将 `table_search` 表格设为显示状态。
+        """
+        # 显示完整数据的表格（在搜索框中有内容时隐藏，为空时显示）
+        self.table = Table(
+            self, header=["商品", "市集价", "原价", "市集折扣", "链接（双击用浏览器打开）"],
+            columns_width=[400, 80, 80, 80, 200],
+            edit_enable=False,
+        )
+        self.table.cellDoubleClicked.connect(self.OnCellDoubleClick)
+        # 显示搜索结果的表格（在搜索框中有内容时显示，为空时隐藏）
+        self.table_search = Table(
+            self, header=["商品", "市集价", "原价", "市集折扣", "链接（双击用浏览器打开）"],
+            columns_width=[400, 80, 80, 80, 200],
+            edit_enable=False,
+        )
+        self.table_search.cellDoubleClicked.connect(self.OnCellDoubleClickSearch)
+        self.table_search.setVisible(False)
+        # 表格区布局
+        self.layout_table = WrapLayout([self.layout_search, self.table, self.table_search, self.layout_table_options])
 
         # 整体布局
         self.layout = WrapLayout([self.layout_table, self.button_hide_ctrl, self.group_ctrl], "H")
@@ -226,10 +200,9 @@ class App(QWidget):
         self.group_edit_cookie = WrapGroup(self, "Cookie", [self.button_edit_cookie, self.button_test_cookie], "H")
         
         # 选择使用的数据库
-        # self.group_dbs_used, self.box_dbs_used = self.WrapCheckBoxs(self, "使用数据库", ["MySQL", "SQLite"])
         self.box_use_mysql = CheckBox(self, "MySQL", on_change=self.OnChangeUseMySQL)
         self.box_use_sqlite = CheckBox(self, "SQLite", on_change=self.OnChangeUseSQLite)
-        self.group_dbs_used = WrapGroup(self, "使用数据库", [self.box_use_mysql, self.box_use_sqlite])
+        self.group_dbs_used = WrapGroup(self, "将记录插入数据库", [self.box_use_mysql, self.box_use_sqlite])
         
         # MySQL配置和测试按钮
         self.button_setup_mysql =Button(self, "配置MySQL", h=40, on_click=self.OnClickSetupMySQL)
@@ -280,18 +253,18 @@ class App(QWidget):
         if type == "msg":
             match data:
                 case "no more":
-                    print("没有更多商品了")
+                    Print("没有更多商品了")
 
                     # 如果插入数据库方式为“合并”，则删除无效数据并将临时表数据合并到主表
                     if self.insert_method == "合并": self.MergeDB()
                     self.Finish() # 结束当前爬取任务
                     QMessageBox.information(self, " ", "没有更多商品了", QMessageBox.Ok)
                 case "invalid cookie":
-                    print("Cookie 无效，请更新 Cookie")
+                    Print("Cookie 无效，请更新 Cookie")
                     self.Finish() # 结束当前爬取任务
                     QMessageBox.critical(self, " ", "Cookie 无效，请更新 Cookie", QMessageBox.Ok)
                 case "reconnect failed":
-                    print("自动重连失败，请选择接下来的操作...")
+                    Print("自动重连失败，请选择接下来的操作...")
 
                     choices_simple = ["再次重连", "直接结束"]
                     tips_simple = [
@@ -330,7 +303,7 @@ class App(QWidget):
                             self.MergeDB()
                             self.Finish() # 结束当前爬取任务
                 case _: # 其他消息，暂停爬取并弹出消息框
-                    print(data)
+                    Print(data)
                     self.Pause() # 暂停当前爬取任务
                     QMessageBox.critical(self, " ", data, QMessageBox.Ok)
 
@@ -342,14 +315,15 @@ class App(QWidget):
                 QTimer.singleShot(3000, SetStatusReady) # 定时3秒之后将状态设为“准备就绪”
                     
         elif type == "record": # data: list[item]
+            self.all_items.extend(data)
             match self.insert_method:
                 case "合并":
                     for item in data:
-                        if self.show_item: self.AddItemToTable(item)
+                        if self.show_item: self.AddItemToTwoTable(item)
                         for db in self.dbs: db.note(item) # 存入临时表
                 case "新增":
                     for item in data:
-                        if self.show_item: self.AddItemToTable(item)
+                        if self.show_item: self.AddItemToTwoTable(item)
                         for db in self.dbs.copy():
                             success = db.store(item, error_echo=False) # 存入主表
                             if not success: # 如果记录已经在当前数据库中存在
@@ -373,6 +347,18 @@ class App(QWidget):
         """
         for db in self.dbs: db.flush_new()
 
+    def FilterItem(self, item: Item):
+        return self.filter.filtrate(item)
+    
+    def FilterWholeTableSearch(self):
+        self.table_search.setRowCount(0)
+        for item in self.all_items:
+            self.AddItemToTableSearch(item)
+
+    def AddItemToTwoTable(self, item: Item):
+        self.AddItemToTable(item)
+        self.AddItemToTableSearch(item)
+
     def AddItemToTable(self, item: Item):
         record = [item.name, str(item.price), str(item.origin_price), f"{'%.2f'%item.discount}", item.process_url()]
         self.table.insertRow(self.table.rowCount())
@@ -380,6 +366,15 @@ class App(QWidget):
             self.table.setItem(self.table.rowCount() - 1, i, QTableWidgetItem(record[i]))
         # 表格滚动条自动滚动到底部
         if self.auto_scroll: self.table.scrollToBottom()
+
+    def AddItemToTableSearch(self, item: Item):
+        if not self.FilterItem(item): return # 如果不符合过滤条件，则不显示
+        record = [item.name, str(item.price), str(item.origin_price), f"{'%.2f'%item.discount}", item.process_url()]
+        self.table_search.insertRow(self.table_search.rowCount())
+        for i in range(len(record)):
+            self.table_search.setItem(self.table_search.rowCount() - 1, i, QTableWidgetItem(record[i]))
+        # 表格滚动条自动滚动到底部
+        if self.auto_scroll: self.table_search.scrollToBottom()
 
     def SetStatus(self, status: str):
         self.status_bar.showMessage("当前状态：" + status)
@@ -403,6 +398,8 @@ class App(QWidget):
             # 在主线程中创建RunThread对象，并连接信号和槽
             self.run_thread = RunThread(self.item_type, self.sort, self.use_clash)
             self.run_thread.signal.connect(self.HandleSignal)
+            # 检查Clash配置是否正确
+            if self.use_clash: read_proxy_config()
         except Exception as e:
             QMessageBox.critical(self, " ", str(e), QMessageBox.Ok)
             return
@@ -417,6 +414,7 @@ class App(QWidget):
         self.box_sort.setEnabled(False)
         self.box_insert_method.setEnabled(False)
         self.button_edit_cookie.setEnabled(False)
+        self.button_test_cookie.setEnabled(False)
         self.box_use_mysql.setEnabled(False)
         self.box_use_sqlite.setEnabled(False)
         self.button_setup_mysql.setEnabled(False)
@@ -427,6 +425,8 @@ class App(QWidget):
 
         # 清空表格
         self.table.setRowCount(0)
+        self.table_search.setRowCount(0)
+        self.all_items = []
 
         # 启动子线程
         self.block_signal = False
@@ -505,6 +505,7 @@ class App(QWidget):
         self.box_sort.setEnabled(True)
         self.box_insert_method.setEnabled(True)
         self.button_edit_cookie.setEnabled(True)
+        self.button_test_cookie.setEnabled(True)
         self.box_use_mysql.setEnabled(True)
         self.box_use_sqlite.setEnabled(True)
         self.button_setup_mysql.setEnabled(True)
@@ -538,6 +539,16 @@ class App(QWidget):
     ############################################################################################
     ####                                以下是各种事件处理函数                                ####
     ############################################################################################
+    def OnCellDoubleClick(self, row, col):
+        if self.table.horizontalHeaderItem(col).text() == "链接（双击用浏览器打开）":
+            url = self.table.item(row, col).text()
+            webbrowser.open(url)
+
+    def OnCellDoubleClickSearch(self, row, col):
+        if self.table_search.horizontalHeaderItem(col).text() == "链接（双击用浏览器打开）":
+            url = self.table_search.item(row, col).text()
+            webbrowser.open(url)
+
     def OnClickHideCtrl(self):
         self.group_ctrl.setVisible(not self.group_ctrl.isVisible())
         self.button_hide_ctrl.setText(">" if self.group_ctrl.isVisible() else "<")
@@ -545,23 +556,23 @@ class App(QWidget):
 
     def OnChangeItemType(self):
         self.item_type = self.box_item_type.currentText()
-        print(f"item type select '{self.box_item_type.currentText()}'")
+        Print(f"item type select '{self.box_item_type.currentText()}'")
 
     def OnChangeSort(self):
         self.sort = self.box_sort.currentText()
-        print(f"sort select '{self.box_sort.currentText()}'")
+        Print(f"sort select '{self.box_sort.currentText()}'")
 
     def OnChangeInsertMethod(self):
         self.insert_method = self.box_insert_method.currentText()
-        print(f"insert method select '{self.box_insert_method.currentText()}'")
+        Print(f"insert method select '{self.box_insert_method.currentText()}'")
 
     def OnClickEditCookie(self):
-        print("edit cookie")
+        Print("edit cookie")
         edit_window = CookieEditWindow()
         edit_window.exec_()
 
     def OnClickTestCookie(self):
-        print("test cookie")
+        Print("test cookie")
         try:
             bmarket_test = Bmarket("全部", "时间降序（推荐）") # 其中会尝试打开 cookie.txt 文件，若文件不存在会抛出异常
             res = bmarket_test.Fetch() # 会使用 cookie.txt 文件中的 Cookie 访问市集
@@ -573,26 +584,26 @@ class App(QWidget):
     def OnChangeUseMySQL(self):
         self.use_mysql = self.box_use_mysql.isChecked()
         self.box_insert_method.setEnabled(self.use_mysql or self.use_sqlite)
-        print("use mysql" if self.box_use_mysql.isChecked() else "not use mysql")
+        Print("use mysql" if self.box_use_mysql.isChecked() else "not use mysql")
 
     def OnChangeUseSQLite(self):
         self.use_sqlite = self.box_use_sqlite.isChecked()
         self.box_insert_method.setEnabled(self.use_mysql or self.use_sqlite)
-        print("use sqlite" if self.box_use_sqlite.isChecked() else "not use sqlite")
+        Print("use sqlite" if self.box_use_sqlite.isChecked() else "not use sqlite")
 
     def OnChangeUseClash(self):
         self.use_clash = self.checkbox_use_clash.isChecked()
         if self.run_thread:
             self.run_thread.use_clash = self.use_clash
-        print("use clash" if self.checkbox_use_clash.isChecked() else "not use clash")
+        Print("use clash" if self.checkbox_use_clash.isChecked() else "not use clash")
         
     def OnClickSetupMySQL(self):
-        print("Setup MySQL")
+        Print("Setup MySQL")
         edit_window = MySQLConfigEditWindow()
         edit_window.exec_()
 
     def OnClickTestMySQL(self):
-        print("Test MySQL")
+        Print("Test MySQL")
         try:
             _ = MySQLDB()
             QMessageBox.information(self, " ", "MySQL 连接成功", QMessageBox.Ok)
@@ -600,12 +611,12 @@ class App(QWidget):
             QMessageBox.critical(self, " ", str(e), QMessageBox.Ok)
 
     def OnClickSetupClash(self):
-        print("Setup Clash")
+        Print("Setup Clash")
         edit_window = ClashConfigEditWindow()
         edit_window.exec_()
 
     def OnClickTestClash(self):
-        print("Test Clash")
+        Print("Test Clash")
         try:
             _ = ClashProxy()
             QMessageBox.information(self, " ", "Clash 连接成功", QMessageBox.Ok)
@@ -625,13 +636,23 @@ class App(QWidget):
     def OnClickContinue(self):
         self.Continue()
 
+    def OnClickSearch(self):
+        self.filter.SetFilter(self.textbox_search.text())
+        if self.filter.text == "": # 如果搜索框为空，则显示完整数据表
+            self.table.setVisible(True)
+            self.table_search.setVisible(False)
+        else: # 否则显示搜索结果表
+            self.FilterWholeTableSearch()
+            self.table.setVisible(False)
+            self.table_search.setVisible(True)
+
     def OnChangeShowItem(self):
         self.show_item = self.checkbox_show_item.isChecked()
-        print("show item" if self.checkbox_show_item.isChecked() else "not show item")
+        Print("show item" if self.checkbox_show_item.isChecked() else "not show item")
 
     def OnChangeAutoScroll(self):
         self.auto_scroll = self.checkbox_auto_scroll.isChecked()
-        print("auto scroll" if self.checkbox_auto_scroll.isChecked() else "not auto scroll")
+        Print("auto scroll" if self.checkbox_auto_scroll.isChecked() else "not auto scroll")
 
     
 if __name__ == '__main__':

@@ -4,11 +4,12 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QPixmap, QIcon
 
 
-def WrapLayout(items, direct = "V"):
+def WrapLayout(items, direct = "V", align = None):
     """
     wrap items into a layout
     `items`: `list[QWidget | QVBoxLayout | QHBoxLayout]`
     `direct`: "V" for wrapping into a QVBoxLayout, "H" for wrapping into a QHBoxLayout
+    `align`: None | "left" | "right" | "top" | "bottom" | "center"
     """
     layout = QVBoxLayout() if direct == "V" else QHBoxLayout()
     for item in items:
@@ -16,14 +17,22 @@ def WrapLayout(items, direct = "V"):
             layout.addWidget(item)
         elif isinstance(item, QVBoxLayout) or isinstance(item, QHBoxLayout):
             layout.addLayout(item)
+    # alignment
+    match align:
+        case "left":   layout.setAlignment(PyQt5.QtCore.Qt.AlignLeft)
+        case "right":  layout.setAlignment(PyQt5.QtCore.Qt.AlignRight)
+        case "top":    layout.setAlignment(PyQt5.QtCore.Qt.AlignTop)
+        case "bottom": layout.setAlignment(PyQt5.QtCore.Qt.AlignBottom)
+        case "center": layout.setAlignment(PyQt5.QtCore.Qt.AlignCenter)
     return layout
 
-def WrapGroup(parent, group_title, items, direct = "V", w = "Auto", h = "Auto"):
+def WrapGroup(parent, group_title, items, direct = "V", w = "Auto", h = "Auto", align = None):
     """
     wrap items into a group
     `items`: `list[QWidget | QVBoxLayout | QHBoxLayout]`
     `direct`: "V" for wrapping into a QVBoxLayout, "H" for wrapping into a QHBoxLayout
-    `w` `h`: width and height of the group, otherwise not fixed if "Auto", 
+    `w` `h`: width and height of the group, otherwise not fixed if "Auto",
+    `align`: "left" | "right" | "top" | "bottom" | "center"
     """
     group = QGroupBox(group_title, parent)
     if w != "Auto": group.setFixedWidth(w)
@@ -35,6 +44,13 @@ def WrapGroup(parent, group_title, items, direct = "V", w = "Auto", h = "Auto"):
             layout.addWidget(item)
         elif isinstance(item, QVBoxLayout) or isinstance(item, QHBoxLayout):
             layout.addLayout(item)
+    # alignment
+    match align:
+        case "left":   layout.setAlignment(PyQt5.QtCore.Qt.AlignLeft)
+        case "right":  layout.setAlignment(PyQt5.QtCore.Qt.AlignRight)
+        case "top":    layout.setAlignment(PyQt5.QtCore.Qt.AlignTop)
+        case "bottom": layout.setAlignment(PyQt5.QtCore.Qt.AlignBottom)
+        case "center": layout.setAlignment(PyQt5.QtCore.Qt.AlignCenter)
     group.setLayout(layout)
     return group
 
@@ -260,7 +276,7 @@ def MultiLinePlainTextbox(parent, init_text = "", placeholder = "", p_x = 0, p_y
 
 def Table(parent, p_x = 0, p_y = 0, w = "Auto", h = "Auto", row = "Auto", column = "Auto",
           color = "#000", bg_color = None, font_style = "Default", font_size = 9,
-          header = "Auto", columns_width = "Auto", content = []):
+          header = "Auto", columns_width = "Auto", content = [], edit_enable = True):
     """
     `parent`: parent QWidget. If put in a layout, you can use `None` and then call `layout.addWidget`
     `w`: if "Auto", sum of width of vertical header, each column and vertical scrollbar 
@@ -270,11 +286,16 @@ def Table(parent, p_x = 0, p_y = 0, w = "Auto", h = "Auto", row = "Auto", column
     `header`: `list[str]`
     `columns_width`: `list[int]`
     `content`: `[[r1], [r2], ...]` first row, then column
+    `edit_method`: "double click", "single click" or None(for disable edit)
     """
     table = QTableWidget(parent)
     # row & column
     if row == "Auto": row = len(content)
-    if column == "Auto": column = max(len(row) for row in content) if len(content) > 0 else 0
+    if column == "Auto":
+        column = max(
+            len(columns_width) if isinstance(columns_width, list) else 0, # given `columns_width`, use its length
+            max(len(row) for row in content) if len(content) > 0 else 0 # given `content`, use its max length
+        )
     table.setRowCount(row)
     table.setColumnCount(column)
     # header
@@ -294,6 +315,9 @@ def Table(parent, p_x = 0, p_y = 0, w = "Auto", h = "Auto", row = "Auto", column
     if columns_width != "Auto":
         for i in range(len(columns_width)):
             table.setColumnWidth(i, columns_width[i])
+    # edit enable
+    if not edit_enable:
+        table.setEditTriggers(QAbstractItemView.NoEditTriggers)
     # geometry
     table.move(p_x, p_y)
     if w == "Auto":

@@ -2,6 +2,8 @@ from os import path as os_path, mkdir
 from sqlite3 import connect
 from time import strftime, localtime
 from item import Item
+from Log import *
+
 
 def GetTime():
     return strftime("%Y-%m-%d %H:%M:%S", localtime())
@@ -38,7 +40,7 @@ class DB:
             cursor.execute("SHOW TABLES")
             return len(cursor.fetchall())
         except Exception as e:
-            print("错误信息:", str(e))
+            Print("错误信息:", str(e))
         finally:
             cursor.close()
         return -1
@@ -58,7 +60,7 @@ class DB:
                    "`url` VARCHAR(128));"
             cursor.execute(sql)
         except Exception as e:
-            print("错误信息:", str(e))
+            Print("错误信息:", str(e))
         finally:
             cursor.close()
 
@@ -70,7 +72,7 @@ class DB:
             sql = f"DROP TABLE {'' if nonexist_echo else 'IF EXISTS'} `{table_name}`"
             cursor.execute(sql)
         except Exception as e:
-            print("错误信息:", str(e))
+            Print("错误信息:", str(e))
         finally:
             cursor.close()
     
@@ -88,7 +90,7 @@ class DB:
             self.conn.commit()
             flag = True
         except Exception as e:
-            if error_echo: print("错误信息:", str(e))
+            if error_echo: Print("错误信息:", str(e))
             # 发生错误时回滚
             self.conn.rollback()
             flag = False
@@ -115,7 +117,7 @@ class DB:
             cursor.execute(sql)
             self.conn.commit()
         except Exception as e:
-            print("错误信息:", str(e))
+            Print("错误信息:", str(e))
             self.conn.rollback()
         finally:
             cursor.close()
@@ -131,7 +133,7 @@ class DB:
             cursor.execute(sql)
             self.conn.commit()
         except Exception as e:
-            print("错误信息:", str(e))
+            Print("错误信息:", str(e))
             self.conn.rollback()
         finally:
             cursor.close()

@@ -30,8 +30,14 @@ class CookieEditWindow(QDialog):
         self.textbox_cookie = MultiLinePlainTextbox(self, placeholder="在此输入 Cookie")
 
         # 取消和确定按钮
-        self.button_cancel = Button(self, "取消", h=40, on_click=self.OnClickCancel)
-        self.button_ok = Button(self, "确定", h=40, on_click=self.OnClickOk)
+        self.button_cancel = Button(
+            self, "取消", h=40,
+            color="#fff", bg_color="#fc5531", on_click=self.OnClickCancel,
+        )
+        self.button_ok = Button(
+            self, "确定", h=40,
+            color="#fff", bg_color="#7ac13f", on_click=self.OnClickOk,
+        )
         self.layout_buttons = WrapLayout([self.button_cancel, self.button_ok], "H")
 
         # 整体布局
@@ -123,8 +129,14 @@ class MySQLConfigEditWindow(QDialog):
         self.config_layout = WrapLayout([self.layout_labels, self.layout_textbox], "H")
 
         # 取消和确定按钮
-        self.button_cancel = Button(self, "取消", h=40, on_click=self.OnClickCancel)
-        self.button_ok = Button(self, "确定", h=40, on_click=self.OnClickOk)
+        self.button_cancel = Button(
+            self, "取消", h=40,
+            color="#fff", bg_color="#fc5531", on_click=self.OnClickCancel,
+        )
+        self.button_ok = Button(
+            self, "确定", h=40,
+            color="#fff", bg_color="#7ac13f", on_click=self.OnClickOk,
+        )
         self.layout_buttons = WrapLayout([self.button_cancel, self.button_ok], "H")
 
         # 整体布局
@@ -212,8 +224,14 @@ class ClashConfigEditWindow(QDialog):
         self.config_layout = WrapLayout([self.layout_labels, self.layout_textbox], "H")
 
         # 取消和确定按钮
-        self.button_cancel = Button(self, "取消", h=40, on_click=self.OnClickCancel)
-        self.button_ok = Button(self, "确定", h=40, on_click=self.OnClickOk)
+        self.button_cancel = Button(
+            self, "取消", h=40,
+            color="#fff", bg_color="#fc5531", on_click=self.OnClickCancel,
+        )
+        self.button_ok = Button(
+            self, "确定", h=40,
+            color="#fff", bg_color="#7ac13f", on_click=self.OnClickOk,
+        )
         self.layout_buttons = WrapLayout([self.button_cancel, self.button_ok], "H")
 
         # 整体布局
@@ -242,24 +260,3 @@ if __name__ == '__main__':
     ex = ClashConfigEditWindow()
     return_val = app.exec_()
     sys.exit(return_val)
-
-    # 读取 config.json 文件，并获取其中的 mysql 字段
-    # with open("config.json", "r", encoding="utf-8") as f:
-    #     config = json.load(f)["config"]
-
-    # mysql_config = config["mysql"]
-    # host = mysql_config["host"]
-    # port = mysql_config["port"]
-    # user = mysql_config["user"]
-    # passwd = mysql_config["passwd"]
-    # db = mysql_config["db"]
-    # charset = mysql_config["charset"]
-    # print(host, port, user, passwd, db, charset)
-
-    # mysql_config["port"] = 3316
-    # mysql_config["user"] = "魔芋"
-    # config["mysql"] = mysql_config
-    # with open("config.json", "w", encoding="utf-8") as f:
-    #     json.dump({"config": config}, f, ensure_ascii=False, indent=4)
-
-    # print(host, port, user, passwd, db, charset)
