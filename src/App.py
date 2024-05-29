@@ -179,7 +179,7 @@ class App(QWidget):
 
     def InitControlGroup(self):
         # 选择商品类型
-        self.box_item_type = ComboBox(self, ["全部", "手办", "模型", "3C", "福袋"])
+        self.box_item_type = ComboBox(self, ["全部", "手办", "模型", "周边", "3C", "福袋"])
         self.box_item_type.currentIndexChanged.connect(self.OnChangeItemType)
         self.group_item_type = WrapGroup(self, "商品类型", [self.box_item_type], "V")
 
