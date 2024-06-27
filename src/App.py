@@ -188,33 +188,37 @@ class App(QWidget):
         self.box_sort.currentIndexChanged.connect(self.OnChangeSort)
         self.group_sort = WrapGroup(self, "排序方式", [self.box_sort], "V")
 
-        # 选择插入数据库方式
-        self.box_insert_method = ComboBox(self, ["合并", "新增"])
-        self.box_insert_method.currentIndexChanged.connect(self.OnChangeInsertMethod)
-        self.box_insert_method.setEnabled(False)
-        self.group_insert_method = WrapGroup(self, "插入数据库方式", [self.box_insert_method], "V")
-
         # cookie设置
         self.button_edit_cookie = Button(self, "编辑Cookie", h=40, on_click=self.OnClickEditCookie)
         self.button_test_cookie = Button(self, "测试Cookie", h=40, on_click=self.OnClickTestCookie)
         self.group_edit_cookie = WrapGroup(self, "Cookie", [self.button_edit_cookie, self.button_test_cookie], "H")
         
         # 选择使用的数据库
+        # 使用MySQL
         self.box_use_mysql = CheckBox(self, "MySQL", on_change=self.OnChangeUseMySQL)
-        self.box_use_sqlite = CheckBox(self, "SQLite", on_change=self.OnChangeUseSQLite)
-        self.group_dbs_used = WrapGroup(self, "将记录插入数据库", [self.box_use_mysql, self.box_use_sqlite])
-        
         # MySQL配置和测试按钮
         self.button_setup_mysql =Button(self, "配置MySQL", h=40, on_click=self.OnClickSetupMySQL)
         self.button_test_mysql = Button(self, "测试MySQL连接", h=40, on_click=self.OnClickTestMySQL)
-        self.group_mysql = WrapGroup(self, "MySQL", [self.button_setup_mysql, self.button_test_mysql], "H")
+        self.group_mysql_button = WrapLayout([self.button_setup_mysql, self.button_test_mysql], "H")
+        # 使用SQLite
+        self.box_use_sqlite = CheckBox(self, "SQLite", on_change=self.OnChangeUseSQLite)
+        # 选择插入数据库方式
+        self.label_empty = Label(self, " ")
+        self.label_insert_method = Label(self, "插入数据库方式")
+        self.box_insert_method = ComboBox(self, ["合并", "新增"])
+        self.box_insert_method.currentIndexChanged.connect(self.OnChangeInsertMethod)
+        self.box_insert_method.setEnabled(False)
+        self.layout_insert_method = WrapLayout([self.label_empty, self.label_insert_method, self.box_insert_method], "V")
+        # 区块布局
+        self.group_dbs_used = WrapGroup(self, "将记录插入数据库",
+            [self.box_use_mysql, self.group_mysql_button, self.box_use_sqlite, self.layout_insert_method])
 
         # Clash配置和测试按钮
         self.checkbox_use_clash = CheckBox(self, "风控时自动使用Clash切换代理", on_change=self.OnChangeUseClash)
         self.button_setup_clash = Button(self, "配置Clash", h=40, on_click=self.OnClickSetupClash)
         self.button_test_clash = Button(self, "测试Clash连接", h=40, on_click=self.OnClickTestClash)
         self.layout_setup_and_test_clash = WrapLayout([self.button_setup_clash, self.button_test_clash], "H")
-        self.group_clash = WrapGroup(self, "Clash", [self.checkbox_use_clash, self.layout_setup_and_test_clash])
+        self.group_clash = WrapGroup(self, "代理", [self.checkbox_use_clash, self.layout_setup_and_test_clash])
 
         # 开始、暂停、停止、继续按钮
         self.button_start = Button(self, "开始", h=60, font_style="黑体", font_size=20, color="#fff", bg_color="#7ac13f", on_click=self.OnClickStart)
@@ -230,10 +234,8 @@ class App(QWidget):
         self.group_ctrl = WrapGroup(self, "控制区", [
             self.group_item_type,
             self.group_sort,
-            self.group_insert_method,
             self.group_edit_cookie,
             self.group_dbs_used,
-            self.group_mysql,
             self.group_clash,
             self.button_start,
             self.button_pause,

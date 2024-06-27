@@ -213,6 +213,24 @@ def Textbox(parent, init_text = "", placeholder = "", p_x = 0, p_y = 0, w = "Aut
     """
     `parent`: parent QWidget. If put in a layout, you can use `None` and then call `layout.addWidget`
     `on_change`: `(text) -> None`
+
+    NOTE: Be careful that `on_change` you pass in should not use the textbox itself;
+          if your on-change function does need to use the textbox itself,
+          you should use `.textChanged.connect(<your on-change function>)` instead after you call this function.
+    FOR EXAMPLE:
+        This is invalid:
+        ```
+        tb = Textbox(self, on_change = lambda: print(tb))
+        ```
+        This is valid: 
+        ```
+        tb = Textbox(self, on_change = lambda: print("CHANGE"))
+        ```
+        Or thit is also valid:
+        ```
+        tb = Textbox(self)
+        tb.textChanged.connect(lambda: print(tb))
+        ```
     """
     textbox = QLineEdit(parent)
     # on_change event
@@ -235,6 +253,24 @@ def MultiLineTextbox(parent, init_text = "", placeholder = "", p_x = 0, p_y = 0,
     This is a multi-line textbox WITH text formatting
     `parent`: parent QWidget. If put in a layout, you can use `None` and then call `layout.addWidget`
     `on_change`: `(text) -> None`
+
+    NOTE: Be careful that `on_change` you pass in should not use the textbox itself;
+          if your on-change function does need to use the textbox itself,
+          you should use `.textChanged.connect(<your on-change function>)` instead after you call this function.
+    FOR EXAMPLE:
+        This is invalid:
+        ```
+        tb = Textbox(self, on_change = lambda: print(tb))
+        ```
+        This is valid: 
+        ```
+        tb = Textbox(self, on_change = lambda: print("CHANGE"))
+        ```
+        Or thit is also valid:
+        ```
+        tb = Textbox(self)
+        tb.textChanged.connect(lambda: print(tb))
+        ```
     """
     textbox = QTextEdit(parent)
     # on_change event
@@ -257,6 +293,24 @@ def MultiLinePlainTextbox(parent, init_text = "", placeholder = "", p_x = 0, p_y
     This is a multi-line textbox WITHOUT text formatting
     `parent`: parent QWidget. If put in a layout, you can use `None` and then call `layout.addWidget`
     `on_change`: `(text) -> None`
+
+    NOTE: Be careful that `on_change` you pass in should not use the textbox itself;
+          if your on-change function does need to use the textbox itself,
+          you should use `.textChanged.connect(<your on-change function>)` instead after you call this function.
+    FOR EXAMPLE:
+        This is invalid:
+        ```
+        tb = Textbox(self, on_change = lambda: print(tb))
+        ```
+        This is valid: 
+        ```
+        tb = Textbox(self, on_change = lambda: print("CHANGE"))
+        ```
+        Or thit is also valid:
+        ```
+        tb = Textbox(self)
+        tb.textChanged.connect(lambda: print(tb))
+        ```
     """
     textbox = QPlainTextEdit(parent)
     # on_change event
@@ -332,6 +386,24 @@ def ComboBox(parent, items = [], p_x = 0, p_y = 0, w = "Auto", h = "Auto", on_ch
     """
     `parent`: parent QWidget. If put in a layout, you can use `None` and then call `layout.addWidget`
     `on_change`: `(index) -> None`
+
+    NOTE: Be careful that `on_change` you pass in should not use the textbox itself;
+          if your on-change function does need to use the textbox itself,
+          you should use `.textChanged.connect(<your on-change function>)` instead after you call this function.
+    FOR EXAMPLE:
+        This is invalid:
+        ```
+        tb = Textbox(self, on_change = lambda: print(tb))
+        ```
+        This is valid: 
+        ```
+        tb = Textbox(self, on_change = lambda: print("CHANGE"))
+        ```
+        Or thit is also valid:
+        ```
+        tb = Textbox(self)
+        tb.textChanged.connect(lambda: print(tb))
+        ```
     """
     combobox = QComboBox(parent)
     # on_change event
@@ -351,6 +423,24 @@ def CheckBox(parent, text, p_x = 0, p_y = 0, w = "Auto", h = "Auto", on_change =
     """
     `parent`: parent QWidget. If put in a layout, you can use `None` and then call `layout.addWidget`
     `on_change`: `(checked) -> None`
+
+    NOTE: Be careful that `on_change` you pass in should not use the textbox itself;
+          if your on-change function does need to use the textbox itself,
+          you should use `.textChanged.connect(<your on-change function>)` instead after you call this function.
+    FOR EXAMPLE:
+        This is invalid:
+        ```
+        tb = Textbox(self, on_change = lambda: print(tb))
+        ```
+        This is valid: 
+        ```
+        tb = Textbox(self, on_change = lambda: print("CHANGE"))
+        ```
+        Or thit is also valid:
+        ```
+        tb = Textbox(self)
+        tb.textChanged.connect(lambda: print(tb))
+        ```
     """
     checkbox = QCheckBox(text, parent)
     # on_change event
