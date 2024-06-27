@@ -1,6 +1,6 @@
 import json
 from concurrent.futures import ThreadPoolExecutor
-from clashAPI import Selector, Mode, clashAPI
+from ClashAPI import Selector, Mode, ClashAPI
 
 
 def read_proxy_config(file_path = "config.json"):
@@ -26,7 +26,7 @@ class proxy:
         self.selector = config["selector"]
 
         try:
-            self.clash = clashAPI(f"{self.host}:{self.port}", self.secret)
+            self.clash = ClashAPI(f"{self.host}:{self.port}", self.secret)
         except:
             raise ConnectionError(f"Clash 连接失败，请检查 Clash 是否已启动并在端口 '{self.host}:{self.port}' 监听，以及 selector 是否正确")
         

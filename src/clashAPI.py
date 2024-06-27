@@ -32,7 +32,7 @@ def access_msg(status_code, content) -> dict:
     return {"status": status_code, "content": content}
 
 
-class clashAPI:
+class ClashAPI:
     def __init__(self, external_controller = "127.0.0.1:9090", secret = ""):
         if not external_controller.startswith("http"):
             self.exc = "http://" + external_controller
@@ -127,7 +127,7 @@ class clashAPI:
 
 
 if __name__ == "__main__":
-    api = clashAPI()
+    api = ClashAPI()
     print(api.get_now_proxy(Selector.RULE))
     print("-------------------")
     print(api.get_all_proxy(Selector.GLOBAL))

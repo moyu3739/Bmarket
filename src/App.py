@@ -6,15 +6,17 @@ from PyQt5.QtWidgets import QApplication, QWidget, QMessageBox
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import QThread, pyqtSignal, QTimer
 
-from EasyPyQt import *
-from EditWindow import *
-from Log import *
-
-from item import Item, Filter, NameFilter
+from Item import Item
 from Bmarket import Bmarket
 from mysql_database import DB as MySQLDB
 from sqlite_database import DB as SQLiteDB
 from clash_proxy import proxy as ClashProxy, read_proxy_config
+
+from EasyPyQt import *
+from EditWindow import *
+from FilterWindow import *
+from Log import *
+from Filter import *
 
 
 class RunThread(QThread):
@@ -104,7 +106,8 @@ class App(QWidget):
         self.dbs = []
         self.status = "stop"
         self.all_items = []
-        self.filter = NameFilter("")
+        self.name_filter = NameFilter("")
+        self.price_filter = PriceFilter()
     
     def InitUI(self):
         self.setWindowTitle(self.title)
@@ -130,7 +133,8 @@ class App(QWidget):
         self.textbox_search = Textbox(self, placeholder="搜索商品", h=30, w=300)
         self.textbox_search.setClearButtonEnabled(True)
         self.button_search = Button(self, "🔍", h=30, w=30, on_click=self.OnClickSearch)
-        self.layout_search = WrapLayout([self.textbox_search, self.button_search], "H", align="left")
+        self.button_filter = Button(self, "🗝️", h=30, w=30, on_click=self.OnClickFilter)
+        self.layout_search = WrapLayout([self.textbox_search, self.button_search, self.button_filter], "H", align="left")
         # 表格选项
         self.checkbox_show_item = CheckBox(self, "实时显示商品", on_change=self.OnChangeShowItem)
         self.checkbox_show_item.setChecked(True)
@@ -350,12 +354,13 @@ class App(QWidget):
         for db in self.dbs: db.flush_new()
 
     def FilterItem(self, item: Item):
-        return self.filter.filtrate(item)
+        return self.name_filter.Judge(item) and self.price_filter.Judge(item)
     
     def FilterWholeTableSearch(self):
         self.table_search.setRowCount(0)
         for item in self.all_items:
             self.AddItemToTableSearch(item)
+        # TODO: 需要性能优化
 
     def AddItemToTwoTable(self, item: Item):
         self.AddItemToTable(item)
@@ -639,14 +644,24 @@ class App(QWidget):
         self.Continue()
 
     def OnClickSearch(self):
-        self.filter.SetFilter(self.textbox_search.text())
-        if self.filter.text == "": # 如果搜索框为空，则显示完整数据表
+        self.name_filter.SetFilter(self.textbox_search.text())
+        if self.name_filter.text == "" and not self.price_filter.effective: # 如果搜索框为空且没有对价格筛选，显示完整数据表
             self.table.setVisible(True)
             self.table_search.setVisible(False)
         else: # 否则显示搜索结果表
             self.FilterWholeTableSearch()
             self.table.setVisible(False)
             self.table_search.setVisible(True)
+
+    def OnClickFilter(self):
+        filter_window = FilterWindow(self.price_filter)
+        accept = filter_window.exec_()
+        self.price_filter = filter_window.price_filter
+        if self.price_filter.effective:
+            self.button_filter.setStyleSheet(f"background-color: #7ac13f;")
+        else:
+            self.button_filter.setStyleSheet("")
+        if accept: self.button_search.click()
 
     def OnChangeShowItem(self):
         self.show_item = self.checkbox_show_item.isChecked()

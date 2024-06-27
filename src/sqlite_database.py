@@ -1,7 +1,7 @@
 from os import path as os_path, mkdir
 from sqlite3 import connect
 from time import strftime, localtime
-from item import Item
+from Item import Item
 from Log import *
 
 

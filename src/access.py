@@ -1,6 +1,6 @@
 from requests import post
 from typing import List
-from item import Item
+from Item import Item
 
 
 def get_cookie():

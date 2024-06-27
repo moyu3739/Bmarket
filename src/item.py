@@ -48,26 +48,3 @@ class Item:
 
     def info(self):
         return f"{self.name} - {self.price}元（原价：{self.origin_price}元，{'%.2f'%self.discount}折） - {self.process_url()}"
-    
-
-class Filter(ABC):
-    def __init__(self):
-        pass
-
-    @abstractmethod
-    def filtrate(self, item: Item) -> bool:
-        pass
-
-class DefaultFilter(Filter):
-    def filtrate(self, item: Item) -> bool:
-        return True
-    
-class NameFilter(Filter):
-    def __init__(self, text: str):
-        self.text = text
-
-    def SetFilter(self, text: str):
-        self.text = text
-
-    def filtrate(self, item: Item) -> bool:
-        return self.text in item.name
