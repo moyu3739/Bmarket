@@ -46,11 +46,11 @@ class RunThread(QThread):
                 self.interrupt("msg", "invalid cookie")
             elif fetched == "reconnect failed":
                 if self.use_clash:
-                    Print("自动重连失败，正在切换代理...")
+                    Log.Print("自动重连失败，正在切换代理...")
                     self.emit("status", "自动重连失败，正在切换代理...")
                     msg = self.clash.change_proxy() # 更换代理
                     if msg == "ok":
-                        Print(f"切换到代理 '{self.clash.now_proxy}'")
+                        Log.Print(f"切换到代理 '{self.clash.now_proxy}'")
                         self.emit("status", f"已切换到代理 '{self.clash.now_proxy}'")
                         continue
                     else: self.interrupt("msg", msg)
@@ -255,18 +255,18 @@ class App(QWidget):
         if type == "msg":
             match data:
                 case "no more":
-                    Print("没有更多商品了")
+                    Log.Print("没有更多商品了")
 
                     # 如果插入数据库方式为“合并”，则删除无效数据并将临时表数据合并到主表
                     if self.insert_method == "合并": self.MergeDB()
                     self.Finish() # 结束当前爬取任务
                     QMessageBox.information(self, " ", "没有更多商品了", QMessageBox.Ok)
                 case "invalid cookie":
-                    Print("Cookie 无效，请更新 Cookie")
+                    Log.Print("Cookie 无效，请更新 Cookie")
                     self.Finish() # 结束当前爬取任务
                     QMessageBox.critical(self, " ", "Cookie 无效，请更新 Cookie", QMessageBox.Ok)
                 case "reconnect failed":
-                    Print("自动重连失败，请选择接下来的操作...")
+                    Log.Print("自动重连失败，请选择接下来的操作...")
 
                     choices_simple = ["再次重连", "直接结束"]
                     tips_simple = [
@@ -305,7 +305,7 @@ class App(QWidget):
                             self.MergeDB()
                             self.Finish() # 结束当前爬取任务
                 case _: # 其他消息，暂停爬取并弹出消息框
-                    Print(data)
+                    Log.Print(data)
                     self.Pause() # 暂停当前爬取任务
                     QMessageBox.critical(self, " ", data, QMessageBox.Ok)
 
@@ -558,23 +558,23 @@ class App(QWidget):
 
     def OnChangeItemType(self):
         self.item_type = self.box_item_type.currentText()
-        Print(f"item type select '{self.box_item_type.currentText()}'")
+        Log.Print(f"item type select '{self.box_item_type.currentText()}'")
 
     def OnChangeSort(self):
         self.sort = self.box_sort.currentText()
-        Print(f"sort select '{self.box_sort.currentText()}'")
+        Log.Print(f"sort select '{self.box_sort.currentText()}'")
 
     def OnChangeInsertMethod(self):
         self.insert_method = self.box_insert_method.currentText()
-        Print(f"insert method select '{self.box_insert_method.currentText()}'")
+        Log.Print(f"insert method select '{self.box_insert_method.currentText()}'")
 
     def OnClickEditCookie(self):
-        Print("edit cookie")
+        Log.Print("edit cookie")
         edit_window = CookieEditWindow()
         edit_window.exec_()
 
     def OnClickTestCookie(self):
-        Print("test cookie")
+        Log.Print("test cookie")
         try:
             bmarket_test = Bmarket("全部", "时间降序（推荐）") # 其中会尝试打开 cookie.txt 文件，若文件不存在会抛出异常
             res = bmarket_test.Fetch() # 会使用 cookie.txt 文件中的 Cookie 访问市集
@@ -586,26 +586,26 @@ class App(QWidget):
     def OnChangeUseMySQL(self):
         self.use_mysql = self.box_use_mysql.isChecked()
         self.box_insert_method.setEnabled(self.use_mysql or self.use_sqlite)
-        Print("use mysql" if self.box_use_mysql.isChecked() else "not use mysql")
+        Log.Print("use mysql" if self.box_use_mysql.isChecked() else "not use mysql")
 
     def OnChangeUseSQLite(self):
         self.use_sqlite = self.box_use_sqlite.isChecked()
         self.box_insert_method.setEnabled(self.use_mysql or self.use_sqlite)
-        Print("use sqlite" if self.box_use_sqlite.isChecked() else "not use sqlite")
+        Log.Print("use sqlite" if self.box_use_sqlite.isChecked() else "not use sqlite")
 
     def OnChangeUseClash(self):
         self.use_clash = self.checkbox_use_clash.isChecked()
         if self.run_thread:
             self.run_thread.use_clash = self.use_clash
-        Print("use clash" if self.checkbox_use_clash.isChecked() else "not use clash")
+        Log.Print("use clash" if self.checkbox_use_clash.isChecked() else "not use clash")
         
     def OnClickSetupMySQL(self):
-        Print("Setup MySQL")
+        Log.Print("Setup MySQL")
         edit_window = MySQLConfigEditWindow()
         edit_window.exec_()
 
     def OnClickTestMySQL(self):
-        Print("Test MySQL")
+        Log.Print("Test MySQL")
         try:
             _ = MySQLDB()
             QMessageBox.information(self, " ", "MySQL 连接成功", QMessageBox.Ok)
@@ -613,12 +613,12 @@ class App(QWidget):
             QMessageBox.critical(self, " ", str(e), QMessageBox.Ok)
 
     def OnClickSetupClash(self):
-        Print("Setup Clash")
+        Log.Print("Setup Clash")
         edit_window = ClashConfigEditWindow()
         edit_window.exec_()
 
     def OnClickTestClash(self):
-        Print("Test Clash")
+        Log.Print("Test Clash")
         try:
             _ = ClashProxy()
             QMessageBox.information(self, " ", "Clash 连接成功", QMessageBox.Ok)
@@ -650,14 +650,20 @@ class App(QWidget):
 
     def OnChangeShowItem(self):
         self.show_item = self.checkbox_show_item.isChecked()
-        Print("show item" if self.checkbox_show_item.isChecked() else "not show item")
+        Log.Print("show item" if self.checkbox_show_item.isChecked() else "not show item")
 
     def OnChangeAutoScroll(self):
         self.auto_scroll = self.checkbox_auto_scroll.isChecked()
-        Print("auto scroll" if self.checkbox_auto_scroll.isChecked() else "not auto scroll")
+        Log.Print("auto scroll" if self.checkbox_auto_scroll.isChecked() else "not auto scroll")
 
     
 if __name__ == '__main__':
+    # 通过命令行参数设置写日志是否启用
+    Log.SetEnable(False)
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "-l" or sys.argv[1] == "--log":
+            Log.SetEnable(True)
+
     app = QApplication(sys.argv)
     ex = App()
     return_val = app.exec_()
