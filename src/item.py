@@ -50,16 +50,29 @@ class Item:
     def info(self):
         return f"{self.name} - {self.price}元（原价：{self.origin_price}元，{'%.2f'%self.discount}折） - {self.process_url()}"
 
+    @staticmethod
+    def to_json(item):
+        return {
+            "id": item.id,
+            "name": item.name,
+            "price": item.price,
+            "origin_price": item.origin_price,
+            "detail_list": item.detail_list
+        }
+    
+    @staticmethod
+    def from_json(json_str):
+        id = json_str["id"]
+        name = json_str["name"]
+        price = json_str["price"]
+        origin_price = json_str["origin_price"]
+        detail_list = json_str["detail_list"]
+        return Item(id, name, price, origin_price, detail_list)
 
 
 if __name__ == '__main__':
-    records = [
-        ["a", 59, 119],
-        ["b", 79, 99],
-        ["d", 99, 109],
-        ["c", 49, 99],
-    ]
-
-    records.sort(key=lambda x: x[0], reverse=False)
-    for record in records:
-        print(record)
+    item = Item("11111", "test", 10, 20, [])
+    s = Item.to_json(item)
+    print(s)
+    item2 = Item.from_json(s)
+    print(item2.info())

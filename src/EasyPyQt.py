@@ -54,6 +54,18 @@ def WrapGroup(parent, group_title, items, direct = "V", w = "Auto", h = "Auto", 
     group.setLayout(layout)
     return group
 
+def OpenFilePath():
+    """
+    return file path
+    """
+    return QFileDialog.getOpenFileName()[0]
+
+def SaveFilePath(file_type_filter):
+    """
+    return file path
+    """
+    return QFileDialog.getSaveFileName(filter=file_type_filter)[0]
+
 def Label(parent, text = "label", p_x = 0, p_y = 0, w = "Auto", h = "Auto",
         tip = "label", halign = "left", valign = "center",
         color = "#000", bg_color = None, font_style = "Default", font_size = 9,
@@ -469,3 +481,11 @@ def GetChoiceFromMessageBox(title, text, choices, tips, return_idx = False):
     idx = msg.exec_()
     return idx if return_idx else choices[idx]
 
+
+
+if __name__ == "__main__":
+    import sys
+    app = QApplication(sys.argv)
+
+    path = SaveFilePath()
+    print(path)

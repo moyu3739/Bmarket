@@ -130,27 +130,26 @@ class App(QWidget):
             on_click=self.OnClickHideCtrl,
         )
 
-        # 表格区
+        # 表格上侧区域
         # 搜索框和搜索按钮
         self.textbox_search = Textbox(self, placeholder="搜索商品", h=30, w=300)
         self.textbox_search.setClearButtonEnabled(True)
         self.button_search = Button(self, "🔍", h=30, w=30, on_click=self.OnClickSearch)
         self.button_filter = Button(self, "🗝️", h=30, w=30, on_click=self.OnClickFilter)
         self.layout_search = WrapLayout([self.textbox_search, self.button_search, self.button_filter], "H", align="left")
-        # 表格选项
+        # 导入导出表格按钮
+        self.button_import = Button(self, "导入", h=30, w=80, on_click=self.OnClickImport)
+        self.button_export = Button(self, "导出", h=30, w=80, on_click=self.OnClickExport)
+        self.layout_import_export = WrapLayout([self.button_import, self.button_export], "H", align="right")
+        # 表格上侧区域布局
+        self.layout_table_top = WrapLayout([self.layout_search, self.layout_import_export], "H")
+
+        # 表格下侧区域
         self.checkbox_show_item = CheckBox(self, "实时显示商品", on_change=self.OnChangeShowItem)
         self.checkbox_show_item.setChecked(True)
         self.checkbox_auto_scroll = CheckBox(self, "自动滚动到底部", on_change=self.OnChangeAutoScroll)
         self.checkbox_auto_scroll.setChecked(True)
-        self.layout_table_options = WrapLayout([self.checkbox_show_item, self.checkbox_auto_scroll], "H", align="left")
-        """
-        这里设计了两个表格分别用于显示完整数据和搜索结果
-        目的：提高搜索框为空时的搜索（即显示全部记录）速度，避免表格的插入操作对所有记录都执行一遍
-        方法：获取到记录时，无条件插入 `table` 表格，根据搜索框条件过滤后插入 `table_search` 表格。
-            搜索时，如果搜索框为空，将 `table_search` 表格设为隐藏状态，将 `table` 表格设为显示状态即可；
-            如果搜索框不为空，根据搜索框条件过滤全部记录 `all_items` 放进 `table_search` 表格，
-            并将 `table` 表格设为隐藏状态，将 `table_search` 表格设为显示状态。
-        """
+        self.layout_table_bottom = WrapLayout([self.checkbox_show_item, self.checkbox_auto_scroll], "H", align="left")
 
         # 表头，需要重定义表头点击事件
         class TableHeader(QHeaderView):
@@ -162,39 +161,36 @@ class App(QWidget):
                 # 表头点击事件
                 app = self.app
                 index = self.logicalIndexAt(event.pos())
+                if index > 3: return
                 if index == app.sort_index:
                     if app.sort_reverse: app.sort_reverse = False
                     else: app.sort_index = None
                 else:
                     app.sort_index = index
                     app.sort_reverse = True
+
+                # 在对应列的表头标注"▼"或"▲"表示排序方式
+                header = ["商品", "市集价", "原价", "市集折扣", "链接（双击用浏览器打开）"]
+                if app.sort_index is not None:
+                    header[app.sort_index] += "▼" if app.sort_reverse else "▲"
+                app.table.setHorizontalHeaderLabels(header)
+
                 app.RefreshTable()
 
-        # 显示完整数据的表格（在搜索框中有内容时隐藏，为空时显示）
+        # 表格
+        columns_width = [400, 80, 80, 90, 200]
         self.table = Table(
             self, header=["商品", "市集价", "原价", "市集折扣", "链接（双击用浏览器打开）"],
-            columns_width=[400, 80, 80, 80, 200],
+            columns_width=columns_width,
             edit_enable=False,
         )
         self.table.setHorizontalHeader(TableHeader(Qt.Horizontal, self))
         self.table.cellDoubleClicked.connect(self.OnCellDoubleClick)
-        columns_width = [400, 80, 80, 80, 200]
         for i in range(len(columns_width)):
             self.table.setColumnWidth(i, columns_width[i])
-        # 显示搜索结果的表格（在搜索框中有内容时显示，为空时隐藏）
-        # self.table_search = Table(
-        #     self, header=["商品", "市集价", "原价", "市集折扣", "链接（双击用浏览器打开）"],
-        #     columns_width=[400, 80, 80, 80, 200],
-        #     edit_enable=False,
-        # )
-        # self.table_search.setHorizontalHeader(TableSearchHeader(Qt.Horizontal, self))
-        # self.table_search.cellDoubleClicked.connect(self.OnCellDoubleClickSearch)
-        # self.table_search.setVisible(False)
-        # columns_width = [400, 80, 80, 80, 200]
-        # for i in range(len(columns_width)):
-        #     self.table_search.setColumnWidth(i, columns_width[i])
-        # 表格区布局
-        self.layout_table = WrapLayout([self.layout_search, self.table, self.layout_table_options])
+
+        # 表格区布局（表格上侧区域、表格、表格下侧区域）
+        self.layout_table = WrapLayout([self.layout_table_top, self.table, self.layout_table_bottom])
 
         # 整体布局
         self.layout = WrapLayout([self.layout_table, self.button_hide_ctrl, self.group_ctrl], "H")
@@ -385,16 +381,12 @@ class App(QWidget):
     def FilterItem(self, item: Item):
         return self.name_filter.Judge(item) and self.price_filter.Judge(item)
     
-    # def FilterWholeTableSearch(self):
-    #     filtered_records = []
-    #     for item in self.all_items:
-    #         if self.FilterItem(item):
-    #             record = [item.name, str(item.price), str(item.origin_price), f"{'%.2f'%item.discount}", item.process_url()]
-    #             filtered_records.append(record)
-    #     self.table_search.setRowCount(len(filtered_records))
-    #     for i in range(len(filtered_records)):
-    #         for j in range(5):
-    #             self.table_search.setItem(i, j, QTableWidgetItem(filtered_records[i][j]))
+    def SetTableRecords(self, records):
+        self.table.setRowCount(len(records))
+        for i in range(len(records)):
+            for j in [0, 1, 2, 4]:
+                self.table.setItem(i, j, QTableWidgetItem(str(records[i][j])))
+            self.table.setItem(i, 3, QTableWidgetItem(f"{records[i][3]:.2f}"))
 
     def RefreshTable(self):
         # 从all_items中根据条件筛选出要显示的记录
@@ -407,32 +399,32 @@ class App(QWidget):
         if self.sort_index is not None:
             filtered_records.sort(key=lambda x: x[self.sort_index], reverse=self.sort_reverse)
         # 将筛选后的记录插入表格
-        self.table.setRowCount(len(filtered_records))
-        for i in range(len(filtered_records)):
-            for j in [0, 1, 2, 4]:
-                self.table.setItem(i, j, QTableWidgetItem(str(filtered_records[i][j])))
-            self.table.setItem(i, 3, QTableWidgetItem(f"{filtered_records[i][3]:.2f}"))
-
-    # def AddItemToTwoTable(self, item: Item):
-    #     self.AddItemToTable(item)
-    #     self.AddItemToTableSearch(item)
+        self.SetTableRecords(filtered_records)
 
     def AddItemToTable(self, item: Item):
-        record = [item.name, f"{'%.2f'%item.price}", f"{'%.2f'%item.origin_price}", f"{'%.2f'%item.discount}", item.process_url()]
+        record = [item.name, f"{item.price:.2f}", f"{item.origin_price:.2f}", f"{item.discount:.2f}", item.process_url()]
         self.table.insertRow(self.table.rowCount())
         for i in range(len(record)):
             self.table.setItem(self.table.rowCount() - 1, i, QTableWidgetItem(record[i]))
         # 表格滚动条自动滚动到底部
         if self.auto_scroll: self.table.scrollToBottom()
 
-    # def AddItemToTableSearch(self, item: Item):
-    #     if not self.FilterItem(item): return # 如果不符合过滤条件，则不显示
-    #     record = [item.name, f"{'%.2f'%item.price}", f"{'%.2f'%item.origin_price}", f"{'%.2f'%item.discount}", item.process_url()]
-    #     self.table_search.insertRow(self.table_search.rowCount())
-    #     for i in range(len(record)):
-    #         self.table_search.setItem(self.table_search.rowCount() - 1, i, QTableWidgetItem(record[i]))
-    #     # 表格滚动条自动滚动到底部
-    #     if self.auto_scroll: self.table_search.scrollToBottom()
+    def ImportItems(self, path):
+        # 从文件中读取json格式的商品数据
+        with open(path, "r", encoding="utf-8") as f:
+            items_json = json.load(f).get("items", {})
+        # 将json格式的商品数据转换为Item对象，保存到all_items中，然后刷新表格
+        self.all_items = [Item.from_json(item_json) for item_json in items_json]
+        self.RefreshTable()
+
+    def ExportItems(self, path):
+        items_json = []
+        # 遍历所有商品，将商品转换为json格式
+        for item in self.all_items:
+            items_json.append(Item.to_json(item))
+        # 写入文件
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump({"items": items_json}, f, ensure_ascii=False, indent=4)
 
     def SetStatus(self, status: str):
         self.status_bar.showMessage("当前状态：" + status)
@@ -602,11 +594,6 @@ class App(QWidget):
             url = self.table.item(row, col).text()
             webbrowser.open(url)
 
-    # def OnCellDoubleClickSearch(self, row, col):
-    #     if self.table_search.horizontalHeaderItem(col).text() == "链接（双击用浏览器打开）":
-    #         url = self.table_search.item(row, col).text()
-    #         webbrowser.open(url)
-
     def OnClickHideCtrl(self):
         self.group_ctrl.setVisible(not self.group_ctrl.isVisible())
         self.button_hide_ctrl.setText(">" if self.group_ctrl.isVisible() else "<")
@@ -626,7 +613,7 @@ class App(QWidget):
 
     def OnClickEditCookie(self):
         Log.Print("edit cookie")
-        edit_window = CookieEditWindow()
+        edit_window = CookieEditWindow(self.x() + 400, self.y() + 200)
         edit_window.exec_()
 
     def OnClickTestCookie(self):
@@ -657,7 +644,7 @@ class App(QWidget):
         
     def OnClickSetupMySQL(self):
         Log.Print("Setup MySQL")
-        edit_window = MySQLConfigEditWindow()
+        edit_window = MySQLConfigEditWindow(self.x() + 400, self.y() + 400)
         edit_window.exec_()
 
     def OnClickTestMySQL(self):
@@ -670,7 +657,7 @@ class App(QWidget):
 
     def OnClickSetupClash(self):
         Log.Print("Setup Clash")
-        edit_window = ClashConfigEditWindow()
+        edit_window = ClashConfigEditWindow(self.x() + 400, self.y() + 400)
         edit_window.exec_()
 
     def OnClickTestClash(self):
@@ -694,22 +681,30 @@ class App(QWidget):
     def OnClickContinue(self):
         self.Continue()
 
-    # def OnClickSearch(self):
-    #     self.name_filter.SetFilter(self.textbox_search.text())
-    #     if self.name_filter.text == "" and not self.price_filter.effective: # 如果搜索框为空且没有对价格筛选，显示完整数据表
-    #         self.table.setVisible(True)
-    #         self.table_search.setVisible(False)
-    #     else: # 否则显示搜索结果表
-    #         self.FilterWholeTableSearch()
-    #         self.table.setVisible(False)
-    #         self.table_search.setVisible(True)
-
     def OnClickSearch(self):
         self.name_filter.SetFilter(self.textbox_search.text())
         self.RefreshTable()
 
+    def OnClickImport(self):
+        try:
+            path = OpenFilePath()
+            if not path: return
+            self.ImportItems(path)
+            QMessageBox.information(self, " ", "导入成功", QMessageBox.Ok)
+        except:
+            QMessageBox.critical(self, " ", "导入失败，文件格式错误", QMessageBox.Ok)
+
+    def OnClickExport(self):
+        try:
+            path = SaveFilePath("JSON files (*.json);;All Files (*)")
+            if not path: return
+            self.ExportItems(path)
+            QMessageBox.information(self, " ", "导出成功", QMessageBox.Ok)
+        except:
+            QMessageBox.critical(self, " ", "导出失败", QMessageBox.Ok)
+
     def OnClickFilter(self):
-        filter_window = FilterWindow(self.price_filter)
+        filter_window = FilterWindow(self.price_filter, self.x() + 400, self.y() + 120)
         accept = filter_window.exec_()
         self.price_filter = filter_window.price_filter
         if self.price_filter.effective:

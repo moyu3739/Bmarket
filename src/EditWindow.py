@@ -6,11 +6,11 @@ from EasyPyQt import *
 
 
 class CookieEditWindow(QDialog):
-    def __init__(self):
+    def __init__(self, left = 100, top = 100):
         super().__init__()
         self.title = "编辑 Cookie"
-        self.left = 100
-        self.top = 100
+        self.left = left
+        self.top = top
         self.width = 600
         self.height = 600
         self.InitUI()
@@ -57,11 +57,11 @@ class CookieEditWindow(QDialog):
 
 
 class MySQLConfigEditWindow(QDialog):
-    def __init__(self):
+    def __init__(self, left = 100, top = 100):
         super().__init__()
         self.title = "编辑 MySQL 配置"
-        self.left = 100
-        self.top = 100
+        self.left = left
+        self.top = top
         self.width = 400
         self.height = 400
         self.InitConfig()
@@ -164,11 +164,11 @@ class MySQLConfigEditWindow(QDialog):
 
 
 class ClashConfigEditWindow(QDialog):
-    def __init__(self):
+    def __init__(self, left = 100, top = 100):
         super().__init__()
         self.title = "编辑 Clash 配置"
-        self.left = 100
-        self.top = 100
+        self.left = left
+        self.top = top
         self.width = 400
         self.height = 300
         self.InitConfig()

@@ -39,11 +39,11 @@ class PriceFilter(ConjunctFilter):
 
 
 class FilterWindow(QDialog):
-    def __init__(self, price_filter = None):
+    def __init__(self, price_filter = None, left = 100, top = 100):
         super().__init__()
         self.title = "筛选条件"
-        self.left = 100
-        self.top = 100
+        self.left = left
+        self.top = top
         self.width = 300
         self.height = 350
         self.InitUI()
