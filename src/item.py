@@ -9,7 +9,7 @@ class Item:
     discount = 0
     detail_list = []
 
-    def __init__(self, id_, name_, price_, origin_price_, detail_list_):
+    def __init__(self, id_: str, name_: str, price_: float, origin_price_: float, detail_list_ = []):
         self.id = id_
         self.name = name_
         self.price = price_
@@ -20,6 +20,7 @@ class Item:
     # keywords := [ [...], [...] ]
     # keywords每一行内部为合取逻辑，行之间为析取逻辑
     # 如果没有关键词，返回empty_default
+    @staticmethod
     def include(sentence: str, keywords = [], empty_default = True):
         if len(keywords) == 0: return empty_default
         for words_group in keywords:
@@ -48,3 +49,17 @@ class Item:
 
     def info(self):
         return f"{self.name} - {self.price}元（原价：{self.origin_price}元，{'%.2f'%self.discount}折） - {self.process_url()}"
+
+
+
+if __name__ == '__main__':
+    records = [
+        ["a", 59, 119],
+        ["b", 79, 99],
+        ["d", 99, 109],
+        ["c", 49, 99],
+    ]
+
+    records.sort(key=lambda x: x[0], reverse=False)
+    for record in records:
+        print(record)

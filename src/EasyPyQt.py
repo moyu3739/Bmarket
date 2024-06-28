@@ -32,7 +32,7 @@ def WrapGroup(parent, group_title, items, direct = "V", w = "Auto", h = "Auto", 
     `items`: `list[QWidget | QVBoxLayout | QHBoxLayout]`
     `direct`: "V" for wrapping into a QVBoxLayout, "H" for wrapping into a QHBoxLayout
     `w` `h`: width and height of the group, otherwise not fixed if "Auto",
-    `align`: "left" | "right" | "top" | "bottom" | "center"
+    `align`: None | "left" | "right" | "top" | "bottom" | "center"
     """
     group = QGroupBox(group_title, parent)
     if w != "Auto": group.setFixedWidth(w)
@@ -55,10 +55,10 @@ def WrapGroup(parent, group_title, items, direct = "V", w = "Auto", h = "Auto", 
     return group
 
 def Label(parent, text = "label", p_x = 0, p_y = 0, w = "Auto", h = "Auto",
-              tip = "label", halign = "left", valign = "center",
-              color = "#000", bg_color = None, font_style = "Default", font_size = 9,
-              href = None, on_activated = "Auto", on_hovered = None
-              ):
+        tip = "label", halign = "left", valign = "center",
+        color = "#000", bg_color = None, font_style = "Default", font_size = 9,
+        href = None, on_activated = "Auto", on_hovered = None
+        ):
     """
     `parent`: parent QWidget. If put in a layout, you can use `None` and then call `layout.addWidget`
     `on_activated`: `(url) -> None`

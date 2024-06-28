@@ -4,7 +4,7 @@ import PyQt5
 
 from PyQt5.QtWidgets import QApplication, QWidget, QMessageBox
 from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import QThread, pyqtSignal, QTimer
+from PyQt5.QtCore import Qt, QThread, pyqtSignal, QTimer
 
 from Item import Item
 from Bmarket import Bmarket
@@ -108,6 +108,8 @@ class App(QWidget):
         self.all_items = []
         self.name_filter = NameFilter("")
         self.price_filter = PriceFilter()
+        self.sort_index = None
+        self.sort_reverse = False
     
     def InitUI(self):
         self.setWindowTitle(self.title)
@@ -149,23 +151,50 @@ class App(QWidget):
             如果搜索框不为空，根据搜索框条件过滤全部记录 `all_items` 放进 `table_search` 表格，
             并将 `table` 表格设为隐藏状态，将 `table_search` 表格设为显示状态。
         """
+
+        # 表头，需要重定义表头点击事件
+        class TableHeader(QHeaderView):
+            def __init__(self, orientation, parent: App):
+                super(TableHeader, self).__init__(orientation, parent)
+                self.app = parent
+
+            def mousePressEvent(self, event):
+                # 表头点击事件
+                app = self.app
+                index = self.logicalIndexAt(event.pos())
+                if index == app.sort_index:
+                    if app.sort_reverse: app.sort_reverse = False
+                    else: app.sort_index = None
+                else:
+                    app.sort_index = index
+                    app.sort_reverse = True
+                app.RefreshTable()
+
         # 显示完整数据的表格（在搜索框中有内容时隐藏，为空时显示）
         self.table = Table(
             self, header=["商品", "市集价", "原价", "市集折扣", "链接（双击用浏览器打开）"],
             columns_width=[400, 80, 80, 80, 200],
             edit_enable=False,
         )
+        self.table.setHorizontalHeader(TableHeader(Qt.Horizontal, self))
         self.table.cellDoubleClicked.connect(self.OnCellDoubleClick)
+        columns_width = [400, 80, 80, 80, 200]
+        for i in range(len(columns_width)):
+            self.table.setColumnWidth(i, columns_width[i])
         # 显示搜索结果的表格（在搜索框中有内容时显示，为空时隐藏）
-        self.table_search = Table(
-            self, header=["商品", "市集价", "原价", "市集折扣", "链接（双击用浏览器打开）"],
-            columns_width=[400, 80, 80, 80, 200],
-            edit_enable=False,
-        )
-        self.table_search.cellDoubleClicked.connect(self.OnCellDoubleClickSearch)
-        self.table_search.setVisible(False)
+        # self.table_search = Table(
+        #     self, header=["商品", "市集价", "原价", "市集折扣", "链接（双击用浏览器打开）"],
+        #     columns_width=[400, 80, 80, 80, 200],
+        #     edit_enable=False,
+        # )
+        # self.table_search.setHorizontalHeader(TableSearchHeader(Qt.Horizontal, self))
+        # self.table_search.cellDoubleClicked.connect(self.OnCellDoubleClickSearch)
+        # self.table_search.setVisible(False)
+        # columns_width = [400, 80, 80, 80, 200]
+        # for i in range(len(columns_width)):
+        #     self.table_search.setColumnWidth(i, columns_width[i])
         # 表格区布局
-        self.layout_table = WrapLayout([self.layout_search, self.table, self.table_search, self.layout_table_options])
+        self.layout_table = WrapLayout([self.layout_search, self.table, self.layout_table_options])
 
         # 整体布局
         self.layout = WrapLayout([self.layout_table, self.button_hide_ctrl, self.group_ctrl], "H")
@@ -325,11 +354,11 @@ class App(QWidget):
             match self.insert_method:
                 case "合并":
                     for item in data:
-                        if self.show_item: self.AddItemToTwoTable(item)
+                        if self.show_item: self.AddItemToTable(item)
                         for db in self.dbs: db.note(item) # 存入临时表
                 case "新增":
                     for item in data:
-                        if self.show_item: self.AddItemToTwoTable(item)
+                        if self.show_item: self.AddItemToTable(item)
                         for db in self.dbs.copy():
                             success = db.store(item, error_echo=False) # 存入主表
                             if not success: # 如果记录已经在当前数据库中存在
@@ -356,32 +385,54 @@ class App(QWidget):
     def FilterItem(self, item: Item):
         return self.name_filter.Judge(item) and self.price_filter.Judge(item)
     
-    def FilterWholeTableSearch(self):
-        self.table_search.setRowCount(0)
-        for item in self.all_items:
-            self.AddItemToTableSearch(item)
-        # TODO: 需要性能优化
+    # def FilterWholeTableSearch(self):
+    #     filtered_records = []
+    #     for item in self.all_items:
+    #         if self.FilterItem(item):
+    #             record = [item.name, str(item.price), str(item.origin_price), f"{'%.2f'%item.discount}", item.process_url()]
+    #             filtered_records.append(record)
+    #     self.table_search.setRowCount(len(filtered_records))
+    #     for i in range(len(filtered_records)):
+    #         for j in range(5):
+    #             self.table_search.setItem(i, j, QTableWidgetItem(filtered_records[i][j]))
 
-    def AddItemToTwoTable(self, item: Item):
-        self.AddItemToTable(item)
-        self.AddItemToTableSearch(item)
+    def RefreshTable(self):
+        # 从all_items中根据条件筛选出要显示的记录
+        filtered_records = []
+        for item in self.all_items:
+            if self.FilterItem(item):
+                record = [item.name, item.price, item.origin_price, item.discount, item.process_url()]
+                filtered_records.append(record)
+        # 按照指定的排序方式对记录进行排序
+        if self.sort_index is not None:
+            filtered_records.sort(key=lambda x: x[self.sort_index], reverse=self.sort_reverse)
+        # 将筛选后的记录插入表格
+        self.table.setRowCount(len(filtered_records))
+        for i in range(len(filtered_records)):
+            for j in [0, 1, 2, 4]:
+                self.table.setItem(i, j, QTableWidgetItem(str(filtered_records[i][j])))
+            self.table.setItem(i, 3, QTableWidgetItem(f"{filtered_records[i][3]:.2f}"))
+
+    # def AddItemToTwoTable(self, item: Item):
+    #     self.AddItemToTable(item)
+    #     self.AddItemToTableSearch(item)
 
     def AddItemToTable(self, item: Item):
-        record = [item.name, str(item.price), str(item.origin_price), f"{'%.2f'%item.discount}", item.process_url()]
+        record = [item.name, f"{'%.2f'%item.price}", f"{'%.2f'%item.origin_price}", f"{'%.2f'%item.discount}", item.process_url()]
         self.table.insertRow(self.table.rowCount())
         for i in range(len(record)):
             self.table.setItem(self.table.rowCount() - 1, i, QTableWidgetItem(record[i]))
         # 表格滚动条自动滚动到底部
         if self.auto_scroll: self.table.scrollToBottom()
 
-    def AddItemToTableSearch(self, item: Item):
-        if not self.FilterItem(item): return # 如果不符合过滤条件，则不显示
-        record = [item.name, str(item.price), str(item.origin_price), f"{'%.2f'%item.discount}", item.process_url()]
-        self.table_search.insertRow(self.table_search.rowCount())
-        for i in range(len(record)):
-            self.table_search.setItem(self.table_search.rowCount() - 1, i, QTableWidgetItem(record[i]))
-        # 表格滚动条自动滚动到底部
-        if self.auto_scroll: self.table_search.scrollToBottom()
+    # def AddItemToTableSearch(self, item: Item):
+    #     if not self.FilterItem(item): return # 如果不符合过滤条件，则不显示
+    #     record = [item.name, f"{'%.2f'%item.price}", f"{'%.2f'%item.origin_price}", f"{'%.2f'%item.discount}", item.process_url()]
+    #     self.table_search.insertRow(self.table_search.rowCount())
+    #     for i in range(len(record)):
+    #         self.table_search.setItem(self.table_search.rowCount() - 1, i, QTableWidgetItem(record[i]))
+    #     # 表格滚动条自动滚动到底部
+    #     if self.auto_scroll: self.table_search.scrollToBottom()
 
     def SetStatus(self, status: str):
         self.status_bar.showMessage("当前状态：" + status)
@@ -432,7 +483,7 @@ class App(QWidget):
 
         # 清空表格
         self.table.setRowCount(0)
-        self.table_search.setRowCount(0)
+        # self.table_search.setRowCount(0)
         self.all_items = []
 
         # 启动子线程
@@ -551,10 +602,10 @@ class App(QWidget):
             url = self.table.item(row, col).text()
             webbrowser.open(url)
 
-    def OnCellDoubleClickSearch(self, row, col):
-        if self.table_search.horizontalHeaderItem(col).text() == "链接（双击用浏览器打开）":
-            url = self.table_search.item(row, col).text()
-            webbrowser.open(url)
+    # def OnCellDoubleClickSearch(self, row, col):
+    #     if self.table_search.horizontalHeaderItem(col).text() == "链接（双击用浏览器打开）":
+    #         url = self.table_search.item(row, col).text()
+    #         webbrowser.open(url)
 
     def OnClickHideCtrl(self):
         self.group_ctrl.setVisible(not self.group_ctrl.isVisible())
@@ -643,15 +694,19 @@ class App(QWidget):
     def OnClickContinue(self):
         self.Continue()
 
+    # def OnClickSearch(self):
+    #     self.name_filter.SetFilter(self.textbox_search.text())
+    #     if self.name_filter.text == "" and not self.price_filter.effective: # 如果搜索框为空且没有对价格筛选，显示完整数据表
+    #         self.table.setVisible(True)
+    #         self.table_search.setVisible(False)
+    #     else: # 否则显示搜索结果表
+    #         self.FilterWholeTableSearch()
+    #         self.table.setVisible(False)
+    #         self.table_search.setVisible(True)
+
     def OnClickSearch(self):
         self.name_filter.SetFilter(self.textbox_search.text())
-        if self.name_filter.text == "" and not self.price_filter.effective: # 如果搜索框为空且没有对价格筛选，显示完整数据表
-            self.table.setVisible(True)
-            self.table_search.setVisible(False)
-        else: # 否则显示搜索结果表
-            self.FilterWholeTableSearch()
-            self.table.setVisible(False)
-            self.table_search.setVisible(True)
+        self.RefreshTable()
 
     def OnClickFilter(self):
         filter_window = FilterWindow(self.price_filter)
@@ -670,8 +725,9 @@ class App(QWidget):
     def OnChangeAutoScroll(self):
         self.auto_scroll = self.checkbox_auto_scroll.isChecked()
         Log.Print("auto scroll" if self.checkbox_auto_scroll.isChecked() else "not auto scroll")
-
     
+
+
 if __name__ == '__main__':
     # 通过命令行参数设置写日志是否启用
     Log.SetEnable(False)

@@ -43,8 +43,8 @@ class access:
         result = []
         for item_record in data:
             c2cItemsId = item_record.get("c2cItemsId", None)
-            showPrice = item_record.get("showPrice", None)
-            showMarketPrice = item_record.get("showMarketPrice", None)
+            showPrice = float(item_record.get("showPrice", None))
+            showMarketPrice = float(item_record.get("showMarketPrice", None))
             c2cItemsName = item_record.get("c2cItemsName", None)
             detailDtoList = item_record.get("detailDtoList", [])
             item = Item(c2cItemsId, c2cItemsName, showPrice, showMarketPrice, detailDtoList)
