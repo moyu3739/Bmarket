@@ -60,7 +60,7 @@ def OpenFilePath():
     """
     return QFileDialog.getOpenFileName()[0]
 
-def SaveFilePath(file_type_filter):
+def SaveFilePath(file_type_filter = None):
     """
     return file path
     """
