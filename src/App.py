@@ -350,11 +350,11 @@ class App(QWidget):
             match self.insert_method:
                 case "合并":
                     for item in data:
-                        if self.show_item and self.FilterItem(item): self.AddItemToTable(item)
+                        if self.show_item and self.FilterItem(item): self.InsertItemToTable(item)
                         for db in self.dbs: db.note(item) # 存入临时表
                 case "新增":
                     for item in data:
-                        if self.show_item and self.FilterItem(item): self.AddItemToTable(item)
+                        if self.show_item and self.FilterItem(item): self.InsertItemToTable(item)
                         for db in self.dbs.copy():
                             success = db.store(item, error_echo=False) # 存入主表
                             if not success: # 如果记录已经在当前数据库中存在
@@ -401,11 +401,35 @@ class App(QWidget):
         # 将筛选后的记录插入表格
         self.SetTableRecords(filtered_records)
 
-    def AddItemToTable(self, item: Item):
+    def InsertItemPosition(self, item: Item):
+        """
+        根据当前排序的列，返回 item 应该插入的位置
+        """
+        # 如果没有排序，直接返回表格行数
+        if self.sort_index is None: return self.table.rowCount()
+        # 如果有排序，根据排序的列，返回 item 应该插入的位置
+        # 取出 item 的排序关键字
+        key = [item.name, item.price, item.origin_price, item.discount, item.process_url()][self.sort_index]
+        if self.sort_index in [1, 2, 3]: key = float(key)
+        # 进行二分查找
+        left, right = 0, self.table.rowCount() - 1
+        while left <= right:
+            mid = (left + right) // 2
+            # 取出 mid 行的排序关键字
+            contrast = self.table.item(mid, self.sort_index).text()
+            if self.sort_index in [1, 2, 3]: contrast = float(contrast)
+            # 比较 key 和 contrast
+            if (key < contrast if not self.sort_reverse else key > contrast): right = mid - 1
+            else: left = mid + 1
+        return left
+
+    def InsertItemToTable(self, item: Item):
         record = [item.name, f"{item.price:.2f}", f"{item.origin_price:.2f}", f"{item.discount:.2f}", item.process_url()]
-        self.table.insertRow(self.table.rowCount())
+        # 根据当前排序的列，获取 item 应该插入的位置
+        row = self.InsertItemPosition(item)
+        self.table.insertRow(row)
         for i in range(len(record)):
-            self.table.setItem(self.table.rowCount() - 1, i, QTableWidgetItem(record[i]))
+            self.table.setItem(row, i, QTableWidgetItem(record[i]))
         # 表格滚动条自动滚动到底部
         if self.auto_scroll: self.table.scrollToBottom()
 
