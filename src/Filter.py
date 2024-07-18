@@ -1,3 +1,4 @@
+import re
 from abc import ABC, abstractmethod
 from Item import Item
 
@@ -14,14 +15,18 @@ class DefaultFilter(Filter):
         return True
     
 class NameFilter(Filter):
-    def __init__(self, text: str):
+    def __init__(self, text: str, use_re = False):
         self.text = text
+        self.use_re = use_re
 
     def SetFilter(self, text: str):
         self.text = text
 
     def Judge(self, item: Item) -> bool:
-        return self.text in item.name
+        if self.use_re:
+            return re.search(self.text, item.name, re.I) is not None
+        else:
+            return self.text in item.name
     
 class MinPriceFilter(Filter):
     def __init__(self, min_price):

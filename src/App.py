@@ -135,8 +135,9 @@ class App(QWidget):
         self.textbox_search = Textbox(self, placeholder="搜索商品", h=30, w=300)
         self.textbox_search.setClearButtonEnabled(True)
         self.button_search = Button(self, "🔍", h=30, w=30, on_click=self.OnClickSearch)
-        self.button_filter = Button(self, "🗝️", h=30, w=30, on_click=self.OnClickFilter)
-        self.layout_search = WrapLayout([self.textbox_search, self.button_search, self.button_filter], "H", align="left")
+        self.button_use_re = Button(self, ".*", h=30, w=30, tip="使用正则表达式", on_click=self.OnClickUseRe)
+        self.button_filter = Button(self, "🗝️", h=30, w=30, tip="使用筛选", on_click=self.OnClickFilter)
+        self.layout_search = WrapLayout([self.textbox_search, self.button_search, self.button_use_re, self.button_filter], "H", align="left")
         # 导入导出表格按钮
         self.button_import = Button(self, "导入", h=30, w=80, on_click=self.OnClickImport)
         self.button_export = Button(self, "导出", h=30, w=80, on_click=self.OnClickExport)
@@ -505,7 +506,6 @@ class App(QWidget):
 
         # 清空表格
         self.table.setRowCount(0)
-        # self.table_search.setRowCount(0)
         self.all_items = []
 
         # 启动子线程
@@ -711,9 +711,27 @@ class App(QWidget):
     def OnClickContinue(self):
         self.Continue()
 
+    def OnClickUseRe(self):
+        if self.name_filter.use_re:
+            self.name_filter.use_re = False
+            self.button_use_re.setStyleSheet("")
+        else:
+            self.name_filter.use_re = True
+            self.button_use_re.setStyleSheet("background-color: #7ac13f;")
+
     def OnClickSearch(self):
         self.name_filter.SetFilter(self.textbox_search.text())
         self.RefreshTable()
+
+    def OnClickFilter(self):
+        filter_window = FilterWindow(self.price_filter, self.x() + 400, self.y() + 120)
+        accept = filter_window.exec_()
+        self.price_filter = filter_window.price_filter
+        if self.price_filter.effective:
+            self.button_filter.setStyleSheet("background-color: #7ac13f;")
+        else:
+            self.button_filter.setStyleSheet("")
+        if accept: self.button_search.click()
 
     def OnClickImport(self):
         try:
@@ -732,16 +750,6 @@ class App(QWidget):
             QMessageBox.information(self, " ", "导出成功", QMessageBox.Ok)
         except:
             QMessageBox.critical(self, " ", "导出失败", QMessageBox.Ok)
-
-    def OnClickFilter(self):
-        filter_window = FilterWindow(self.price_filter, self.x() + 400, self.y() + 120)
-        accept = filter_window.exec_()
-        self.price_filter = filter_window.price_filter
-        if self.price_filter.effective:
-            self.button_filter.setStyleSheet(f"background-color: #7ac13f;")
-        else:
-            self.button_filter.setStyleSheet("")
-        if accept: self.button_search.click()
 
     def OnChangeShowItem(self):
         self.show_item = self.checkbox_show_item.isChecked()
