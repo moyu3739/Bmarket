@@ -26,6 +26,9 @@ class CookieEditWindow(QDialog):
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
 
+        # 图标
+        self.setWindowIcon(QIcon("icon.png"))
+
         # 多行文本框
         self.textbox_cookie = MultiLinePlainTextbox(self, placeholder="在此输入 Cookie")
 
@@ -86,6 +89,9 @@ class MySQLConfigEditWindow(QDialog):
     def InitUI(self):
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
+
+        # 图标
+        self.setWindowIcon(QIcon("icon.png"))
 
         # host
         self.label_host = Label(self, "主机地址", h=30)
@@ -191,6 +197,9 @@ class ClashConfigEditWindow(QDialog):
     def InitUI(self):
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
+
+        # 图标
+        self.setWindowIcon(QIcon("icon.png"))
 
         # host
         self.label_host = Label(self, "主机地址", h=30)

@@ -63,6 +63,9 @@ class FilterWindow(QDialog):
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
 
+        # 图标
+        self.setWindowIcon(QIcon("icon.png"))
+
         # 市集价区间
         self.textbox_price_min = Textbox(self, placeholder="最低价", w=75)
         self.label_price_hyphen = Label(self, "-", w=9)

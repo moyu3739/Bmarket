@@ -350,11 +350,11 @@ class App(QWidget):
             match self.insert_method:
                 case "合并":
                     for item in data:
-                        if self.show_item: self.AddItemToTable(item)
+                        if self.show_item and self.FilterItem(item): self.AddItemToTable(item)
                         for db in self.dbs: db.note(item) # 存入临时表
                 case "新增":
                     for item in data:
-                        if self.show_item: self.AddItemToTable(item)
+                        if self.show_item and self.FilterItem(item): self.AddItemToTable(item)
                         for db in self.dbs.copy():
                             success = db.store(item, error_echo=False) # 存入主表
                             if not success: # 如果记录已经在当前数据库中存在
@@ -429,11 +429,17 @@ class App(QWidget):
     def SetStatus(self, status: str):
         self.status_bar.showMessage("当前状态：" + status)
 
-    def Quit(self):
+    def close(self):
+        print("close")
+        super().close()
+
+    def CleanUp(self):
         """
         退出程序时调用，终止 Run 线程，断开数据库连接
         """
-        if self.run_thread: self.run_thread.quit()
+        if self.run_thread:
+            self.run_thread.pause()
+            self.run_thread.wait()
         for db in self.dbs: db.disconnect()
 
     ############################################################################################
@@ -733,5 +739,5 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = App()
     return_val = app.exec_()
-    ex.Quit()
+    ex.CleanUp()
     sys.exit(return_val)
