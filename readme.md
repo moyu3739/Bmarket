@@ -88,39 +88,3 @@ PyInstaller -F -w -i icon.png App.py
 + **合并记录**：将本次爬取已经获取到的记录合并到数据库中，会删除无效数据，但可能丢失数据库中已有的有效记录，然后结束本次爬取
 
 如果选择“再次重连”后仍然频繁地重连失败，你可以重置一下网络，比如断开网络再连上、切换WIFI、使用代理等。
-
-----------------------------------------
-
-## 2. 结果查询
-
-### 2.0 无脑省流版
-1. 双击打开 `数据库.exe`
-2. 点击“打开数据库”，找到 `市集.exe` 所在的文件夹，进入子文件夹 `db`，选择 `Bmarket.db` 打开
-<div align=center>
-<img src="img/sqlite_1.jpg" style="zoom: 40%;" />
-</div>
-
-3. 点击“浏览数据”，查看数据表
-<div align=center>
-<img src="img/sqlite_2.jpg" style="zoom: 40%;" />
-</div>
-
-4. 可以在“表”处切换要查看的数据表（手办的数据在 `fig` 中，周边的数据在 `peri` 中）
-<div align=center>
-<img src="img/sqlite_3.jpg" style="zoom: 40%;" />
-</div>
-
-5. 可以在表的列名处单击，指定按照这个列排序；可以在列名下面的文本框中输入进行搜索
-<div align=center>
-<img src="img/sqlite_4.jpg" style="zoom: 40%;" />
-</div>
-
-6. 可以在文本框中右键单击，选择“设置过滤表达式”，实现更复杂的筛选条件
-<div align=center>
-<img src="img/sqlite_5.jpg" style="zoom: 40%;" />
-</div>
-
-7. 想要查看某个商品的详情，把其 "url" 列的内容复制到浏览器网址，即可查看
-
-### 2.1 一些说明
-在文件夹 `DB Browser for SQLite` 中附带了一个 sqlite 数据库浏览器，`数据库.exe` 实际上就是其中 `DB Browser for SQLite.exe` 的快捷方式，它实际上是一个独立的软件包，所以`DB Browser for SQLite` 这整个文件夹其实可以自由地直接迁移
