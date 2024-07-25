@@ -33,10 +33,14 @@ PyInstaller -F -w -i icon.png App.py
     |-|-|
     |![](img/edge_3.jpg)|![](img/chrome_3.jpg)|
 
-4. 选中“标头”（Headers），然后找到 "Cookie" 这一栏，复制里面的这一堆内容，粘贴到我们的 `cookie.txt` 中，注意复制的时候不要多复制或漏复制内容，粘贴完后记得保存
+4. 选中“标头”（Headers），然后找到 "Cookie" 这一栏，复制里面的这一堆内容，点击 Bmarket 界面的“编辑 Cookie”按钮，粘贴进去。
     |edge 浏览器|谷歌浏览器|
     |-|-|
     |![](img/edge_4.jpg)|![](img/chrome_4.jpg)|
+
+<div align=center>
+<img src="img/edit_cookie.jpg" style="zoom: 50%;" />
+</div>
 
 ### 1.2 配置 MySQL
 如果你使用 MySQL（你希望将爬到的记录存进 MySQL 数据库中），你需要点击“配置MySQL”按钮完成配置。
