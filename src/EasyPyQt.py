@@ -68,7 +68,7 @@ def SaveFilePath(file_type_filter = None):
 
 def Label(parent, text = "label", p_x = 0, p_y = 0, w = "Auto", h = "Auto",
         tip = "label", halign = "left", valign = "center",
-        color = "#000", bg_color = None, font_style = "Default", font_size = 9,
+        color = "#000", bg_color = None, font_style = "Default", font_size = -1,
         href = None, on_activated = "Auto", on_hovered = None
         ):
     """
@@ -85,11 +85,11 @@ def Label(parent, text = "label", p_x = 0, p_y = 0, w = "Auto", h = "Auto",
         on_hovered = None
     elif on_activated == "Auto":
         on_activated = lambda url: PyQt5.QtGui.QDesktopServices.openUrl(PyQt5.QtCore.QUrl(url))
-    if on_activated != None: label.linkActivated.connect(on_activated)
-    if on_hovered != None: label.linkHovered.connect(on_hovered)
+    if on_activated is not None: label.linkActivated.connect(on_activated)
+    if on_hovered is not None: label.linkHovered.connect(on_hovered)
     # color and background color
-    label.setText(f'<a href="{href if href != None else ""}">{text}</a>')
-    if bg_color != None: label.setStyleSheet(f"background-color: {bg_color}; color: {color};")
+    label.setText(f'<a href="{href if href is not None else ""}">{text}</a>')
+    if bg_color is not None: label.setStyleSheet(f"background-color: {bg_color}; color: {color};")
     else: label.setStyleSheet(f"color: {color};")
     # alignment
     match halign:
@@ -150,7 +150,7 @@ def ImageLabel(parent, src, p_x = 0, p_y = 0, w = "Auto", h = "Auto", fit_scale 
     return label
 
 def Button(parent, text = "button", tip = "", p_x = 0, p_y = 0, w = "Auto", h = "Auto",
-           color = "#000", bg_color = None, font_style = "Default", font_size = 9,
+           color = "#000", bg_color = None, font_style = "Default", font_size = -1,
            on_click = None):
     """
     `parent`: parent QWidget. If put in a layout, you can use `None` and then call `layout.addWidget`
@@ -158,7 +158,7 @@ def Button(parent, text = "button", tip = "", p_x = 0, p_y = 0, w = "Auto", h = 
     """
     button = QPushButton(text, parent)
     # color and background color
-    if bg_color != None: button.setStyleSheet(f"background-color: {bg_color}; color: {color};")
+    if bg_color is not None: button.setStyleSheet(f"background-color: {bg_color}; color: {color};")
     else: button.setStyleSheet(f"color: {color};")
     # font
     button.setFont(PyQt5.QtGui.QFont(font_style, font_size))
@@ -170,7 +170,7 @@ def Button(parent, text = "button", tip = "", p_x = 0, p_y = 0, w = "Auto", h = 
     if w != "Auto": button.setFixedWidth(w)
     if h != "Auto": button.setFixedHeight(h)
     # on_click event
-    if on_click != None:
+    if on_click is not None:
         button.clicked.connect(on_click)
 
     return button
@@ -216,7 +216,7 @@ def ImageButton(parent, src, tip = "", p_x = 0, p_y = 0, w = "Auto", h = "Auto",
     # tooltip
     if tip != "": button.setToolTip(tip)
     # on_click event
-    if on_click != None:
+    if on_click is not None:
         button.clicked.connect(on_click)
 
     return button
@@ -246,7 +246,7 @@ def Textbox(parent, init_text = "", placeholder = "", p_x = 0, p_y = 0, w = "Aut
     """
     textbox = QLineEdit(parent)
     # on_change event
-    if on_change != None:
+    if on_change is not None:
         textbox.textChanged.connect(on_change)
     # init text
     textbox.setText(init_text)
@@ -286,7 +286,7 @@ def MultiLineTextbox(parent, init_text = "", placeholder = "", p_x = 0, p_y = 0,
     """
     textbox = QTextEdit(parent)
     # on_change event
-    if on_change != None:
+    if on_change is not None:
         textbox.textChanged.connect(lambda: on_change(textbox.toPlainText()))
     # init text
     textbox.setPlainText(init_text)
@@ -326,7 +326,7 @@ def MultiLinePlainTextbox(parent, init_text = "", placeholder = "", p_x = 0, p_y
     """
     textbox = QPlainTextEdit(parent)
     # on_change event
-    if on_change != None:
+    if on_change is not None:
         textbox.textChanged.connect(lambda: on_change(textbox.toPlainText()))
     # init text
     textbox.setPlainText(init_text)
@@ -341,7 +341,7 @@ def MultiLinePlainTextbox(parent, init_text = "", placeholder = "", p_x = 0, p_y
     return textbox
 
 def Table(parent, p_x = 0, p_y = 0, w = "Auto", h = "Auto", row = "Auto", column = "Auto",
-          color = "#000", bg_color = None, font_style = "Default", font_size = 9,
+          color = "#000", bg_color = None, font_style = "Default", font_size = -1,
           header = "Auto", columns_width = "Auto", content = [], edit_enable = True):
     """
     `parent`: parent QWidget. If put in a layout, you can use `None` and then call `layout.addWidget`
@@ -372,7 +372,7 @@ def Table(parent, p_x = 0, p_y = 0, w = "Auto", h = "Auto", row = "Auto", column
         for j in range(len(content[i])):
             table.setItem(i, j, QTableWidgetItem(content[i][j]))
     # color and background color
-    if bg_color != None: table.setStyleSheet(f"QTableWidget {{background-color: {bg_color}; color: {color};}}")
+    if bg_color is not None: table.setStyleSheet(f"QTableWidget {{background-color: {bg_color}; color: {color};}}")
     else: table.setStyleSheet(f"QTableWidget {{color: {color};}}")
     # font
     table.setFont(PyQt5.QtGui.QFont(font_style, font_size))
@@ -394,7 +394,7 @@ def Table(parent, p_x = 0, p_y = 0, w = "Auto", h = "Auto", row = "Auto", column
 
     return table
 
-def ComboBox(parent, items = [], p_x = 0, p_y = 0, w = "Auto", h = "Auto", on_change = None):
+def ComboBox(parent, items = [], p_x = 0, p_y = 0, w = "Auto", h = "Auto", font_style = "Default", font_size = -1, on_change = None):
     """
     `parent`: parent QWidget. If put in a layout, you can use `None` and then call `layout.addWidget`
     `on_change`: `(index) -> None`
@@ -418,8 +418,10 @@ def ComboBox(parent, items = [], p_x = 0, p_y = 0, w = "Auto", h = "Auto", on_ch
         ```
     """
     combobox = QComboBox(parent)
+    # set font size
+    combobox.setFont(PyQt5.QtGui.QFont(font_style, font_size))
     # on_change event
-    if on_change != None:
+    if on_change is not None:
         combobox.currentIndexChanged.connect(on_change)
     # items
     combobox.addItems(items)
@@ -431,7 +433,7 @@ def ComboBox(parent, items = [], p_x = 0, p_y = 0, w = "Auto", h = "Auto", on_ch
 
     return combobox
 
-def CheckBox(parent, text, p_x = 0, p_y = 0, w = "Auto", h = "Auto", on_change = None):
+def CheckBox(parent, text, p_x = 0, p_y = 0, w = "Auto", h = "Auto", font_style = "Default", font_size = -1, on_change = None):
     """
     `parent`: parent QWidget. If put in a layout, you can use `None` and then call `layout.addWidget`
     `on_change`: `(checked) -> None`
@@ -455,8 +457,10 @@ def CheckBox(parent, text, p_x = 0, p_y = 0, w = "Auto", h = "Auto", on_change =
         ```
     """
     checkbox = QCheckBox(text, parent)
+    # set font size
+    checkbox.setFont(PyQt5.QtGui.QFont(font_style, font_size))
     # on_change event
-    if on_change != None:
+    if on_change is not None:
         checkbox.stateChanged.connect(on_change)
     # geometry
     checkbox.move(p_x, p_y)
@@ -465,6 +469,29 @@ def CheckBox(parent, text, p_x = 0, p_y = 0, w = "Auto", h = "Auto", on_change =
     if h != "Auto": checkbox.setFixedHeight(h)
 
     return checkbox
+
+def IntegerBox(parent, value, min, max, on_change = None):
+    """
+    return a `QSpinBox` object
+    """
+    spinbox = QSpinBox(parent)
+    spinbox.setRange(min, max)
+    spinbox.setValue(value)
+    if on_change is not None:
+        spinbox.textChanged.connect(on_change)
+    return spinbox
+
+def FloatBox(parent, value, min, max, step, on_change = None):
+    """
+    return a `QDoubleSpinBox` object
+    """
+    spinbox = QDoubleSpinBox(parent)
+    spinbox.setRange(min, max)
+    spinbox.setSingleStep(step)
+    spinbox.setValue(value)
+    if on_change is not None:
+        spinbox.textChanged.connect(on_change)
+    return spinbox
 
 def GetChoiceFromMessageBox(title, text, choices, tips, return_idx = False):
     """

@@ -15,7 +15,7 @@ class access:
         self.MARKET_URL = "https://mall.bilibili.com/mall-magic-c/internet/c2c/v2/list"
         self.HEADERS = {
             "Cookie": get_cookie(),
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0",
         }
 
     def get_market_data(

@@ -1,6 +1,8 @@
 import sys
+import os
 import webbrowser
 import PyQt5
+import time
 
 from PyQt5.QtWidgets import QApplication, QWidget, QMessageBox
 from PyQt5.QtGui import QIcon
@@ -23,13 +25,14 @@ class RunThread(QThread):
     # 定义一个信号，用于在子线程中发出，主线程中接收
     signal = pyqtSignal(object)
 
-    def __init__(self, item_type, sort, use_clash=False):
+    def __init__(self, item_type, sort, use_clash=False, wait_time=0.0):
         super().__init__()
         self.item_type = item_type # 商品类型
         self.sort = sort # 排序方式
         self.use_clash = use_clash # 是否使用Clash代理
         self.bmarket = Bmarket(self.item_type, self.sort) # 连接市集
         self.running = True
+        self.wait_time = wait_time # 爬取时间间隔
 
     def run(self):
         try:
@@ -60,6 +63,7 @@ class RunThread(QThread):
                     self.interrupt("msg", "reconnect failed")
             else: # have fetched items successfully
                 self.emit("record", fetched)
+            time.sleep(self.wait_time)
 
     def emit(self, type, data):
         self.signal.emit([type, data])
@@ -146,11 +150,18 @@ class App(QWidget):
         self.layout_table_top = WrapLayout([self.layout_search, self.layout_import_export], "H")
 
         # 表格下侧区域
+        # 表格下侧左侧区域
         self.checkbox_show_item = CheckBox(self, "实时显示商品", on_change=self.OnChangeShowItem)
         self.checkbox_show_item.setChecked(True)
         self.checkbox_auto_scroll = CheckBox(self, "自动滚动到底部", on_change=self.OnChangeAutoScroll)
         self.checkbox_auto_scroll.setChecked(True)
-        self.layout_table_bottom = WrapLayout([self.checkbox_show_item, self.checkbox_auto_scroll], "H", align="left")
+        self.layout_table_bottom_left = WrapLayout([self.checkbox_show_item, self.checkbox_auto_scroll], "H", align="left")
+        # 表格下侧右侧区域
+        self.label_wait_time = Label(self, "爬取时间间隔（秒）")
+        self.box_wait_time = FloatBox(self, 0, min=0, max=300, step=0.5, on_change=self.OnChangeWaitTime)
+        self.layout_table_bottom_right = WrapLayout([self.label_wait_time, self.box_wait_time], "H", align="right")
+        # 表格下侧区域布局
+        self.layout_table_bottom = WrapLayout([self.layout_table_bottom_left, self.layout_table_bottom_right], "H")
 
         # 表头，需要重定义表头点击事件
         class TableHeader(QHeaderView):
@@ -477,7 +488,7 @@ class App(QWidget):
             if self.use_mysql: self.dbs.append(MySQLDB(self.item_type))
             if self.use_sqlite: self.dbs.append(SQLiteDB(self.item_type))
             # 在主线程中创建RunThread对象，并连接信号和槽
-            self.run_thread = RunThread(self.item_type, self.sort, self.use_clash)
+            self.run_thread = RunThread(self.item_type, self.sort, self.use_clash, self.box_wait_time.value())
             self.run_thread.signal.connect(self.HandleSignal)
             # 检查Clash配置是否正确
             if self.use_clash: read_proxy_config()
@@ -648,13 +659,16 @@ class App(QWidget):
 
     def OnClickTestCookie(self):
         Log.Print("test cookie")
-        try:
-            bmarket_test = Bmarket("全部", "时间降序（推荐）") # 其中会尝试打开 cookie.txt 文件，若文件不存在会抛出异常
-            res = bmarket_test.Fetch() # 会使用 cookie.txt 文件中的 Cookie 访问市集
-            if res == "invalid cookie": raise Exception() # 若返回 "invalid cookie" 则抛出异常
-            QMessageBox.information(self, " ", "Cookie 有效，市集连接成功", QMessageBox.Ok)
-        except:
+        bmarket_test = Bmarket("全部", "时间降序（推荐）") # 其中会尝试打开 cookie.txt 文件，若文件不存在会抛出异常
+        res = bmarket_test.Fetch() # 会使用 cookie.txt 文件中的 Cookie 访问市集
+        if res == "invalid cookie":
             QMessageBox.critical(self, " ", "Cookie 缺失或已失效，请重新配置 Cookie", QMessageBox.Ok)
+        elif res == "reconnect failed":
+            QMessageBox.critical(self, " ", "市集连接失败，请检查网络连接，或可能触发风控", QMessageBox.Ok)
+        elif res == "no more":
+            QMessageBox.critical(self, " ", "市集连接失败，请检查网络连接，或可能触发风控", QMessageBox.Ok)
+        else:
+            QMessageBox.information(self, " ", "Cookie 有效，市集连接成功", QMessageBox.Ok)
 
     def OnChangeUseMySQL(self):
         self.use_mysql = self.box_use_mysql.isChecked()
@@ -759,15 +773,21 @@ class App(QWidget):
         self.auto_scroll = self.checkbox_auto_scroll.isChecked()
         Log.Print("auto scroll" if self.checkbox_auto_scroll.isChecked() else "not auto scroll")
     
+    def OnChangeWaitTime(self):
+        if self.run_thread is not None:
+            self.run_thread.wait_time = self.box_wait_time.value()
+        Log.Print(f"wait time set to {self.box_wait_time.value()}s")
 
 
 if __name__ == '__main__':
     # 通过命令行参数设置写日志是否启用
+    Log.SetPath("log.txt")
     Log.SetEnable(False)
     if len(sys.argv) > 1:
         if sys.argv[1] == "-l" or sys.argv[1] == "--log":
             Log.SetEnable(True)
 
+    # os.environ["QT_SCALE_FACTOR"] = "2.0"
     app = QApplication(sys.argv)
     ex = App()
     return_val = app.exec_()
