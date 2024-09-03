@@ -43,7 +43,8 @@ class Bmarket:
         Log.Print("开始获取商品信息...")
 
     def Fetch(self):
-        for i in range(self.reconnect + 1):
+        reconnect = self.reconnect # self.reconnect 可能会在循环中被修改
+        for i in range(reconnect + 1):
             try:
                 if self.no_more: return "no more"
 
@@ -63,7 +64,7 @@ class Bmarket:
                 self.count_fetch += 1
                 return fetched
             except Exception as e:
-                if i < self.reconnect:
+                if i < reconnect:
                     Log.Print("连接断开，可能触发风控，尝试自动重连...")
                     sleep(1) # 重连间隔，等待1秒后重连
                 else: # 连续出现重连失败达到上限

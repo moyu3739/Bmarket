@@ -51,12 +51,12 @@ class FilterWindow(QDialog):
 
     def InitSetup(self, price_filter = None):
         if price_filter is not None:
-            if price_filter.min_price: self.textbox_price_min.setText(str(price_filter.min_price))
-            if price_filter.max_price: self.textbox_price_max.setText(str(price_filter.max_price))
-            if price_filter.min_oprice: self.textbox_oprice_min.setText(str(price_filter.min_oprice))
-            if price_filter.max_oprice: self.textbox_oprice_max.setText(str(price_filter.max_oprice))
-            if price_filter.min_discount: self.textbox_discount_min.setText(str(price_filter.min_discount))
-            if price_filter.max_discount: self.textbox_discount_max.setText(str(price_filter.max_discount))
+            if price_filter.min_price is not None: self.textbox_price_min.setText(str(price_filter.min_price))
+            if price_filter.max_price is not None: self.textbox_price_max.setText(str(price_filter.max_price))
+            if price_filter.min_oprice is not None: self.textbox_oprice_min.setText(str(price_filter.min_oprice))
+            if price_filter.max_oprice is not None: self.textbox_oprice_max.setText(str(price_filter.max_oprice))
+            if price_filter.min_discount is not None: self.textbox_discount_min.setText(str(price_filter.min_discount))
+            if price_filter.max_discount is not None: self.textbox_discount_max.setText(str(price_filter.max_discount))
         self.price_filter = price_filter
 
     def InitUI(self):

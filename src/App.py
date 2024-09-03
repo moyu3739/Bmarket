@@ -157,26 +157,74 @@ class App(QWidget):
         self.checkbox_auto_scroll.setChecked(True)
         self.layout_table_bottom_left = WrapLayout([self.checkbox_show_item, self.checkbox_auto_scroll], "H", align="left")
         # 表格下侧右侧区域
+        self.label_reconnect = Label(self, "自动重连次数")
+        self.box_reconnect = IntegerBox(self, 10, min=0, max=100, on_change=self.OnChangeReconnect)
         self.label_wait_time = Label(self, "爬取时间间隔（秒）")
         self.box_wait_time = FloatBox(self, 0, min=0, max=300, step=0.5, on_change=self.OnChangeWaitTime)
-        self.layout_table_bottom_right = WrapLayout([self.label_wait_time, self.box_wait_time], "H", align="right")
+        self.layout_table_bottom_right = WrapLayout([
+            self.label_reconnect,
+            self.box_reconnect,
+            self.label_wait_time,
+            self.box_wait_time],
+            "H", align="right")
         # 表格下侧区域布局
         self.layout_table_bottom = WrapLayout([self.layout_table_bottom_left, self.layout_table_bottom_right], "H")
 
+        # # 表头，需要重定义表头点击事件
+        # class TableHeader(QHeaderView):
+        #     def __init__(self, orientation, parent: App):
+        #         super(TableHeader, self).__init__(orientation, parent)
+        #         self.app = parent
+
+        #     def mousePressEvent(self, event):
+        #         # 表头点击事件
+        #         app = self.app
+        #         index = self.logicalIndexAt(event.pos())
+        #         if index > 3: return
+        #         if index == app.sort_index:
+        #             if app.sort_reverse: app.sort_reverse = False
+        #             else: app.sort_index = None
+        #         else:
+        #             app.sort_index = index
+        #             app.sort_reverse = True
+
+        #         # 在对应列的表头标注"▼"或"▲"表示排序方式
+        #         header = ["商品", "市集价", "原价", "市集折扣", "链接（双击用浏览器打开）"]
+        #         if app.sort_index is not None:
+        #             header[app.sort_index] += "▼" if app.sort_reverse else "▲"
+        #         app.table.setHorizontalHeaderLabels(header)
+
+        #         app.RefreshTable()
+
+        #         # 调用父类的 mousePressEvent 方法以保持默认行为
+        #         super(TableHeader, self).mousePressEvent(event)
+
         # 表头，需要重定义表头点击事件
         class TableHeader(QHeaderView):
-            def __init__(self, orientation, parent: App):
+            def __init__(self, orientation, parent):
                 super(TableHeader, self).__init__(orientation, parent)
                 self.app = parent
 
             def mousePressEvent(self, event):
+                # 获取点击位置的列索引
+                index = self.logicalIndexAt(event.pos())
+                
+                # 检查是否在调整列宽
+                if self.isOnSectionEdge(event.pos(), index):
+                    # 调用父类的 mousePressEvent 方法以保持默认行为
+                    super(TableHeader, self).mousePressEvent(event)
+                    return
+
                 # 表头点击事件
                 app = self.app
-                index = self.logicalIndexAt(event.pos())
-                if index > 3: return
+                if index > 3: 
+                    super(TableHeader, self).mousePressEvent(event)
+                    return
                 if index == app.sort_index:
-                    if app.sort_reverse: app.sort_reverse = False
-                    else: app.sort_index = None
+                    if app.sort_reverse: 
+                        app.sort_reverse = False
+                    else: 
+                        app.sort_index = None
                 else:
                     app.sort_index = index
                     app.sort_reverse = True
@@ -188,6 +236,13 @@ class App(QWidget):
                 app.table.setHorizontalHeaderLabels(header)
 
                 app.RefreshTable()
+
+            def isOnSectionEdge(self, pos, index):
+                """检查鼠标是否在列边界上"""
+                section_start = self.sectionPosition(index)
+                section_end = section_start + self.sectionSize(index)
+                margin = 5  # 边界的宽度
+                return section_start + margin >= pos.x() or pos.x() >= section_end - margin
 
         # 表格
         columns_width = [400, 80, 80, 90, 200]
@@ -732,6 +787,7 @@ class App(QWidget):
         else:
             self.name_filter.use_re = True
             self.button_use_re.setStyleSheet("background-color: #7ac13f;")
+        self.button_search.click()
 
     def OnClickSearch(self):
         self.name_filter.SetFilter(self.textbox_search.text())
@@ -772,6 +828,11 @@ class App(QWidget):
     def OnChangeAutoScroll(self):
         self.auto_scroll = self.checkbox_auto_scroll.isChecked()
         Log.Print("auto scroll" if self.checkbox_auto_scroll.isChecked() else "not auto scroll")
+
+    def OnChangeReconnect(self):
+        if self.run_thread is not None:
+            self.run_thread.bmarket.reconnect = self.box_reconnect.value()
+        Log.Print(f"reconnect times set to {self.box_reconnect.value()}")
     
     def OnChangeWaitTime(self):
         if self.run_thread is not None:
@@ -781,11 +842,12 @@ class App(QWidget):
 
 if __name__ == '__main__':
     # 通过命令行参数设置写日志是否启用
-    Log.SetPath("log.txt")
     Log.SetEnable(False)
     if len(sys.argv) > 1:
         if sys.argv[1] == "-l" or sys.argv[1] == "--log":
             Log.SetEnable(True)
+            if len(sys.argv) > 2: Log.SetPath(sys.argv[2])
+            else: Log.SetPath(None)
 
     # os.environ["QT_SCALE_FACTOR"] = "2.0"
     app = QApplication(sys.argv)
