@@ -132,7 +132,7 @@ def merge(category: str, sort: str, db_type: str, use_proxy = False, show_item_i
             next_id, fetched = bmarket.fetch(next_id, category2id(category), sort2type(sort), keywords, shieldwords)
             for item in fetched:
                 for db in dbs: db.note(item)
-                if show_item_info: print(item.info())
+                if show_item_info: print(item.GetInfo())
             count_item += len(fetched)
             if count_item % 100 == 0:
                 print(f"已获取 {count_item} 条记录")

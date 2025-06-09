@@ -113,6 +113,9 @@ def Label(parent, text = "label", p_x = 0, p_y = 0, w = "Auto", h = "Auto",
 
     return label
 
+def EmptyLine(parent, h = "Auto"):
+    return Label(parent, " ", h=h)
+
 def ImageLabel(parent, src, p_x = 0, p_y = 0, w = "Auto", h = "Auto", fit_scale = True,
               tip = "image label", halign = "center", valign = "center",
               ):

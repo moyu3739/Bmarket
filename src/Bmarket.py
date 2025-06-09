@@ -1,5 +1,5 @@
 from time import sleep
-from access import access
+from access import *
 from Log import *
 
 CATEGORY_MAP = {
