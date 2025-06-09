@@ -12,7 +12,7 @@
 PyInstaller -F -w -i icon.png App.py
 ```
 
-另外注意，`src/image` 中含有一些内置图片文件，需要放在打包后的 exe 可执行文件同目录下。
+另外注意，`src/image` 中含有一些内置图片文件，需要将 `image` 目录与打包后的 exe 可执行文件放在同目录下。
 
 ## 1. 抓取商品信息
 
